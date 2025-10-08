@@ -11,6 +11,10 @@ const { searchIndiaMart } = require("./indiamart");
 const { searchSulekha } = require("./sulekha");
 const { searchTradeIndia } = require("./tradeindia");
 const { searchExportersIndia } = require("./exportersindia");
+const { searchManta } = require("./manta");
+const { searchYellowPagesCanada } = require("./yellowPagesCanada");
+const { searchSuperPages } = require("./superPages");
+const { searchCitySearch } = require("./citysearch");
 
 const app = express();
 const PORT = process.env.PORT || 9000;
@@ -35,7 +39,9 @@ app.get("/", (req, res) => {
             indiamart: "POST /search-indiamart (India B2B)",
             sulekha: "POST /search-sulekha (India Services)",
             tradeindia: "POST /search-tradeindia (India B2B)",
-            exportersindia: "POST /search-exportersindia (India Export)"
+            exportersindia: "POST /search-exportersindia (India Export)",
+            manta: "POST /search-manta (US Business Directory)",
+            superpages: "POST /search-superpages (US Business Directory)"
         },
         requiredParams: {
             keyword: "string (e.g., 'Clinic')",
@@ -74,6 +80,17 @@ app.post("/search-tradeindia", searchTradeIndia);
 
 // ExportersIndia scraping route (India Export)
 app.post("/search-exportersindia", searchExportersIndia);
+
+// Manta scraping route (US Business Directory)
+app.post("/search-manta", searchManta);
+
+app.post("/search-yellowpages-ca", searchYellowPagesCanada);
+
+// SuperPages scraping route (US Business Directory)
+app.post("/search-superpages", searchSuperPages);
+
+
+app.post("/search-citysearch", searchCitySearch);
 
 // Start server
 app.listen(PORT, () => {

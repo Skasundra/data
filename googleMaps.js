@@ -41,13 +41,169 @@ const getBrowserInstance = async () => {
   return browserInstance;
 };
 
+// Helper function to extract detailed data from individual listing page
+const extractDetailedBusinessData = async (page, businessUrl, basicData) => {
+  try {
+    console.log(`Extracting detailed data for: ${basicData.storeName}`);
+
+    await page.goto(businessUrl, {
+      waitUntil: "domcontentloaded",
+      timeout: 15000,
+    });
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    const detailedData = await page.evaluate(() => {
+      const data = {};
+
+      // Extract phone number
+      const phoneSelectors = [
+        'button[data-item-id*="phone"]',
+        'button[aria-label*="Phone"]',
+        '[data-tooltip="Copy phone number"]',
+        'button[data-item-id*="phone:tel:"]',
+      ];
+      for (const selector of phoneSelectors) {
+        const phoneEl = document.querySelector(selector);
+        if (phoneEl) {
+          const phoneText =
+            phoneEl.getAttribute("data-item-id") || phoneEl.innerText;
+          const phoneMatch = phoneText.match(/[\d\s\-\(\)\+]{10,}/);
+          if (phoneMatch) {
+            data.phone = phoneMatch[0].trim();
+            break;
+          }
+        }
+      }
+
+      // Extract website
+      const websiteSelectors = [
+        'a[data-item-id="authority"]',
+        'a[aria-label*="Website"]',
+        'a[data-tooltip="Open website"]',
+      ];
+      for (const selector of websiteSelectors) {
+        const websiteEl = document.querySelector(selector);
+        if (websiteEl) {
+          data.website = websiteEl.href;
+          break;
+        }
+      }
+
+      // Extract full address
+      const addressSelectors = [
+        'button[data-item-id="address"]',
+        'button[aria-label*="Address"]',
+        '[data-tooltip="Copy address"]',
+      ];
+      for (const selector of addressSelectors) {
+        const addressEl = document.querySelector(selector);
+        if (addressEl) {
+          data.fullAddress =
+            addressEl.getAttribute("aria-label") || addressEl.innerText;
+          break;
+        }
+      }
+
+      // Extract hours
+      const hoursTable = document.querySelector('table[aria-label*="Hours"]');
+      if (hoursTable) {
+        const hours = {};
+        const rows = hoursTable.querySelectorAll("tr");
+        rows.forEach((row) => {
+          const day = row.querySelector("td:first-child")?.innerText;
+          const time = row.querySelector("td:last-child")?.innerText;
+          if (day && time) hours[day] = time;
+        });
+        data.businessHours = hours;
+      }
+
+      // Extract rating details
+      const ratingEl = document.querySelector('[aria-label*="stars"]');
+      if (ratingEl) {
+        const ratingText = ratingEl.getAttribute("aria-label");
+        const starsMatch = ratingText.match(/([0-9.]+)\s*stars/);
+        const reviewsMatch = ratingText.match(/([0-9,]+)\s*reviews?/);
+        if (starsMatch) data.stars = parseFloat(starsMatch[1]);
+        if (reviewsMatch)
+          data.totalReviews = parseInt(reviewsMatch[1].replace(/,/g, ""));
+      }
+
+      // Extract category/type
+      const categoryEl = document.querySelector('button[jsaction*="category"]');
+      if (categoryEl) {
+        data.category = categoryEl.innerText.trim();
+      }
+
+      // Extract price level
+      const priceEl = document.querySelector('[aria-label*="Price"]');
+      if (priceEl) {
+        data.priceLevel = priceEl.innerText.trim();
+      }
+
+      // Extract plus code
+      const plusCodeEl = document.querySelector('[data-item-id="oloc"]');
+      if (plusCodeEl) {
+        data.plusCode = plusCodeEl.innerText.trim();
+      }
+
+      // Extract amenities/features
+      const amenities = [];
+      const amenityElements = document.querySelectorAll(
+        '[aria-label*="Amenities"] button, [aria-label*="Accessibility"] button'
+      );
+      amenityElements.forEach((el) => {
+        const text = el.innerText.trim();
+        if (text) amenities.push(text);
+      });
+      if (amenities.length > 0) data.amenities = amenities;
+
+      // Extract service options
+      const serviceOptions = [];
+      const serviceElements = document.querySelectorAll(
+        '[aria-label*="Service options"] button'
+      );
+      serviceElements.forEach((el) => {
+        const text = el.innerText.trim();
+        if (text) serviceOptions.push(text);
+      });
+      if (serviceOptions.length > 0) data.serviceOptions = serviceOptions;
+
+      // Extract popular times if available
+      const popularTimesEl = document.querySelector(
+        '[aria-label*="Popular times"]'
+      );
+      if (popularTimesEl) {
+        data.hasPopularTimes = true;
+      }
+
+      // Extract description/about
+      const aboutEl = document.querySelector('[class*="description"]');
+      if (aboutEl) {
+        data.description = aboutEl.innerText.trim();
+      }
+
+      return data;
+    });
+
+    return { ...basicData, ...detailedData, detailedScrape: true };
+  } catch (error) {
+    console.log(`Error extracting detailed data: ${error.message}`);
+    return { ...basicData, detailedScrape: false, detailError: error.message };
+  }
+};
+
 const searchGoogleMaps = async (req, res) => {
   let page = null;
   const startTime = Date.now();
 
   try {
     console.log("Request received:", JSON.stringify(req.body));
-    const { keyword, place, maxResults = 20 } = req.body;
+    const {
+      keyword,
+      place,
+      maxResults = 20,
+      detailedScrape = false,
+    } = req.body;
     const userId = req.user?.id || "anonymous";
 
     // Input validation
@@ -265,16 +421,20 @@ const searchGoogleMaps = async (req, res) => {
       if (wrapper) {
         let scrollCount = 0;
         let lastResultCount = 0;
-        const maxScrolls = Math.ceil(maxResults / 8); // Google Maps loads ~8-12 results per scroll
+        const maxScrolls = Math.ceil(maxResults / 5) + 5; // More aggressive scrolling
         let noNewResultsCount = 0;
+        let consecutiveNoChange = 0;
 
-        while (scrollCount < maxScrolls && noNewResultsCount < 5) {
+        while (scrollCount < maxScrolls && consecutiveNoChange < 4) {
           const scrollHeightBefore = wrapper.scrollHeight;
 
-          // Smooth scroll with random delays to appear more human
-          wrapper.scrollBy(0, 1000 + Math.random() * 400);
+          // More aggressive scroll distance
+          const scrollAmount = 1500 + Math.random() * 500;
+          wrapper.scrollBy(0, scrollAmount);
+
+          // Shorter wait times for faster scraping
           await new Promise((resolve) =>
-            setTimeout(resolve, 2000 + Math.random() * 1000)
+            setTimeout(resolve, 1500 + Math.random() * 800)
           );
 
           const scrollHeightAfter = wrapper.scrollHeight;
@@ -283,44 +443,56 @@ const searchGoogleMaps = async (req, res) => {
           ).length;
 
           console.log(
-            `Scroll ${scrollCount + 1}: Found ${currentResults} results`
+            `Scroll ${
+              scrollCount + 1
+            }: Found ${currentResults} results (target: ${maxResults})`
           );
 
           // Check if we got new results
           if (currentResults === lastResultCount) {
             noNewResultsCount++;
-            console.log(`No new results (${noNewResultsCount}/5)`);
+            consecutiveNoChange++;
+            console.log(
+              `No new results (${noNewResultsCount} times, consecutive: ${consecutiveNoChange})`
+            );
           } else {
             noNewResultsCount = 0;
+            consecutiveNoChange = 0;
             lastResultCount = currentResults;
           }
 
           scrollCount++;
 
-          // Break if we have enough results or no new content is loading
-          if (
-            currentResults >= maxResults ||
-            (scrollHeightAfter === scrollHeightBefore && noNewResultsCount >= 3)
-          ) {
-            console.log(
-              `Breaking: currentResults=${currentResults}, maxResults=${maxResults}, noNewResultsCount=${noNewResultsCount}`
-            );
+          // Look for "Load more" or "Show more results" buttons and click them
+          const loadMoreSelectors = [
+            '[data-value="Load more results"]',
+            '[jsaction*="loadMore"]',
+            'button[aria-label*="more"]',
+            'button[aria-label*="More"]',
+            ".section-loading-spinner",
+          ];
+
+          for (const selector of loadMoreSelectors) {
+            const loadMoreButton = document.querySelector(selector);
+            if (loadMoreButton && loadMoreButton.offsetParent !== null) {
+              console.log(`Clicking load more button: ${selector}`);
+              loadMoreButton.click();
+              await new Promise((resolve) => setTimeout(resolve, 2000));
+              break;
+            }
+          }
+
+          // Break if we have enough results
+          if (currentResults >= maxResults) {
+            console.log(`✓ Reached target: ${currentResults} >= ${maxResults}`);
             break;
           }
 
-          // Look for "Load more" or "Show more results" buttons and click them
-          const loadMoreButton = document.querySelector(
-            '[data-value="Load more results"], [jsaction*="loadMore"], button[aria-label*="more"]'
-          );
-          if (loadMoreButton && loadMoreButton.offsetParent !== null) {
-            console.log("Clicking load more button...");
-            loadMoreButton.click();
-            await new Promise((resolve) => setTimeout(resolve, 3000));
-          }
-
-          // Additional wait if we're still getting results
-          if (currentResults > lastResultCount) {
-            await new Promise((resolve) => setTimeout(resolve, 1500));
+          // If no new content after multiple attempts, try scrolling to bottom
+          if (consecutiveNoChange >= 2) {
+            console.log("Trying scroll to bottom...");
+            wrapper.scrollTo(0, wrapper.scrollHeight);
+            await new Promise((resolve) => setTimeout(resolve, 2000));
           }
         }
 
@@ -330,7 +502,7 @@ const searchGoogleMaps = async (req, res) => {
       }
     }, maxResults);
 
-    await new Promise((resolve) => setTimeout(resolve, 4000));
+    await new Promise((resolve) => setTimeout(resolve, 3000));
 
     console.log("Extracting data with enhanced collection...");
 
@@ -357,21 +529,29 @@ const searchGoogleMaps = async (req, res) => {
         if (!href || processedUrls.has(href)) return;
         processedUrls.add(href);
 
-        const $parent = $el.closest("div").parent();
+        // Try multiple parent container strategies
+        let $parent = $el.closest("div[jsaction]");
+        if (!$parent.length) $parent = $el.closest("div").parent();
+        if (!$parent.length) $parent = $el.parent().parent();
 
         try {
+          // Enhanced store name extraction with multiple fallbacks
           const storeName =
             $parent.find("div.fontHeadlineSmall").first().text().trim() ||
+            $parent.find(".fontHeadlineSmall").first().text().trim() ||
             $parent
               .find('[data-value="Directions"]')
               .closest("div")
               .find("div")
               .first()
               .text()
-              .trim();
+              .trim() ||
+            $el.attr("aria-label") ||
+            "";
 
           if (!storeName) return;
 
+          // Enhanced rating extraction
           const ratingElement = $parent.find(
             "span.fontBodyMedium > span[aria-label*='stars']"
           );
@@ -390,6 +570,7 @@ const searchGoogleMaps = async (req, res) => {
               : null;
           }
 
+          // Enhanced info extraction with better parsing
           const bodyDiv = $parent.find("div.fontBodyMedium").first();
           const infoText = bodyDiv.text();
           const infoParts = infoText.split("·").map((part) => part.trim());
@@ -397,25 +578,41 @@ const searchGoogleMaps = async (req, res) => {
           let category = "";
           let address = "";
           let phone = "";
+          let priceLevel = "";
+          let hours = "";
 
-          if (infoParts.length >= 2) {
-            category = infoParts[0];
-            address = infoParts[1];
-
-            for (let i = 2; i < infoParts.length; i++) {
-              if (
-                infoParts[i].match(/[\d\s\-\(\)\+]+/) &&
-                infoParts[i].length >= 10
-              ) {
-                phone = infoParts[i];
-                break;
-              }
+          // Parse all info parts
+          infoParts.forEach((part, idx) => {
+            // Category is usually first
+            if (idx === 0 && !part.match(/[\d\s\-\(\)\+]+/)) {
+              category = part;
             }
-          }
+            // Address usually contains street/location info
+            else if (part.match(/\d+/) && !part.match(/^[\d\s\-\(\)\+]+$/)) {
+              address = part;
+            }
+            // Phone number detection
+            else if (part.match(/[\d\s\-\(\)\+]+/) && part.length >= 10) {
+              phone = part;
+            }
+            // Price level ($ symbols)
+            else if (part.match(/^\$+$/)) {
+              priceLevel = part;
+            }
+            // Hours (Open/Closed)
+            else if (part.match(/open|closed|opens|closes/i)) {
+              hours = part;
+            }
+          });
 
+          // Extract website with multiple strategies
           const website =
-            $parent.find('a[data-value="Website"]').attr("href") || "";
+            $parent.find('a[data-value="Website"]').attr("href") ||
+            $parent.find('a[data-tooltip="Open website"]').attr("href") ||
+            $parent.find('a[aria-label*="Website"]').attr("href") ||
+            "";
 
+          // Enhanced place ID extraction
           const placeIdMatch = href.match(
             /\/maps\/place\/[^\/]+\/data=.*?:([^!]+)/
           );
@@ -424,6 +621,10 @@ const searchGoogleMaps = async (req, res) => {
             : href.includes("ChI")
             ? `ChI${href.split("ChI")[1].split("?")[0]}`
             : "";
+
+          // Extract additional data from aria-labels and data attributes
+          const ariaLabel = $el.attr("aria-label") || "";
+          const dataId = $parent.attr("data-result-index") || "";
 
           const businessData = {
             userId,
@@ -439,6 +640,10 @@ const searchGoogleMaps = async (req, res) => {
             stars,
             numberOfReviews,
             ratingText,
+            priceLevel,
+            hours,
+            ariaLabel,
+            resultIndex: dataId,
             searchKeyword: keyword,
             searchLocation: place,
             scrapedAt: new Date().toISOString(),
@@ -459,34 +664,49 @@ const searchGoogleMaps = async (req, res) => {
 
       // If we got new results and haven't reached max, try scrolling more and extract again
       if (
-        attemptResults > 0 &&
         allBusinesses.length < maxResults &&
         extractionAttempt < maxExtractionAttempts
       ) {
-        console.log("Scrolling more to load additional results...");
+        console.log(
+          `Need ${maxResults - allBusinesses.length} more results, scrolling...`
+        );
 
-        await page.evaluate(async () => {
+        await page.evaluate(async (needed) => {
           const wrapper =
             document.querySelector('div[role="feed"]') ||
             document.querySelector('[role="main"]');
           if (wrapper) {
-            // Multiple scrolls with human-like delays
-            for (let i = 0; i < 3; i++) {
-              wrapper.scrollBy(0, 1200 + Math.random() * 400);
+            // More aggressive scrolling based on how many results we need
+            const scrollIterations = Math.min(Math.ceil(needed / 5), 8);
+
+            for (let i = 0; i < scrollIterations; i++) {
+              // Scroll to bottom first
+              wrapper.scrollTo(0, wrapper.scrollHeight);
+              await new Promise((resolve) => setTimeout(resolve, 1200));
+
+              // Then scroll by chunks
+              wrapper.scrollBy(0, 1500 + Math.random() * 500);
               await new Promise((resolve) =>
-                setTimeout(resolve, 2000 + Math.random() * 1000)
+                setTimeout(resolve, 1500 + Math.random() * 800)
               );
+
+              // Check for load more buttons
+              const loadBtn = document.querySelector('[jsaction*="loadMore"]');
+              if (loadBtn) {
+                loadBtn.click();
+                await new Promise((resolve) => setTimeout(resolve, 2000));
+              }
             }
           }
-        });
+        }, maxResults - allBusinesses.length);
 
-        await new Promise((resolve) => setTimeout(resolve, 3000));
+        await new Promise((resolve) => setTimeout(resolve, 2500));
       }
 
       extractionAttempt++;
 
-      // If no new results in this attempt, break
-      if (attemptResults === 0) {
+      // If no new results in this attempt and we have at least some results, break
+      if (attemptResults === 0 && allBusinesses.length > 0) {
         console.log("No new results found, stopping extraction attempts");
         break;
       }
@@ -496,14 +716,8 @@ const searchGoogleMaps = async (req, res) => {
     console.log(`Total extraction attempts: ${extractionAttempt - 1}`);
     console.log(`Final business count: ${allBusinesses.length}`);
 
-    const endTime = Date.now();
-    const executionTime = Math.floor((endTime - startTime) / 1000);
-
-    console.log(`Google Maps scraping completed in ${executionTime} seconds`);
-    console.log(`Found ${allBusinesses.length} businesses`);
-
     // Remove duplicates and sort by extraction order
-    const uniqueBusinesses = allBusinesses.filter(
+    let uniqueBusinesses = allBusinesses.filter(
       (business, index, self) =>
         index ===
         self.findIndex(
@@ -515,6 +729,56 @@ const searchGoogleMaps = async (req, res) => {
     console.log(
       `After deduplication: ${uniqueBusinesses.length} unique businesses`
     );
+
+    // If detailed scrape is requested, click into each listing
+    if (detailedScrape && uniqueBusinesses.length > 0) {
+      console.log(`\n=== STARTING DETAILED SCRAPE ===`);
+      console.log(
+        `Extracting detailed data for ${uniqueBusinesses.length} businesses...`
+      );
+
+      const detailedBusinesses = [];
+      const maxDetailedScrapes = Math.min(uniqueBusinesses.length, maxResults);
+
+      for (let i = 0; i < maxDetailedScrapes; i++) {
+        const business = uniqueBusinesses[i];
+        console.log(
+          `[${i + 1}/${maxDetailedScrapes}] Processing: ${business.storeName}`
+        );
+
+        try {
+          const detailedData = await extractDetailedBusinessData(
+            page,
+            business.googleUrl,
+            business
+          );
+          detailedBusinesses.push(detailedData);
+
+          // Small delay between requests to avoid detection
+          if (i < maxDetailedScrapes - 1) {
+            await new Promise((resolve) =>
+              setTimeout(resolve, 1500 + Math.random() * 1000)
+            );
+          }
+        } catch (error) {
+          console.log(
+            `Error processing ${business.storeName}: ${error.message}`
+          );
+          detailedBusinesses.push({ ...business, detailedScrape: false });
+        }
+      }
+
+      uniqueBusinesses = detailedBusinesses;
+      console.log(
+        `✓ Detailed scrape completed for ${detailedBusinesses.length} businesses`
+      );
+    }
+
+    const endTime = Date.now();
+    const executionTime = Math.floor((endTime - startTime) / 1000);
+
+    console.log(`Google Maps scraping completed in ${executionTime} seconds`);
+    console.log(`Found ${uniqueBusinesses.length} businesses`);
 
     return res.status(200).json({
       status: 200,
@@ -529,6 +793,7 @@ const searchGoogleMaps = async (req, res) => {
         source: "GoogleMaps",
         maxResultsRequested: maxResults,
         extractionAttempts: extractionAttempt - 1,
+        detailedScrapeEnabled: detailedScrape,
       },
     });
   } catch (error) {
