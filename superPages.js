@@ -97,15 +97,15 @@ const searchSuperPages = async (req, res) => {
       const pageUrl =
         currentPage === 1
           ? `https://www.superpages.com/${encodeURIComponent(
-              place.toLowerCase().replace(/\s+/g, "-").replace(/,/g, "")
-            )}/${encodeURIComponent(
-              keyword.toLowerCase().replace(/\s+/g, "-")
-            )}`
+            place.toLowerCase().replace(/\s+/g, "-").replace(/,/g, "")
+          )}/${encodeURIComponent(
+            keyword.toLowerCase().replace(/\s+/g, "-")
+          )}`
           : `https://www.superpages.com/${encodeURIComponent(
-              place.toLowerCase().replace(/\s+/g, "-").replace(/,/g, "")
-            )}/${encodeURIComponent(
-              keyword.toLowerCase().replace(/\s+/g, "-")
-            )}?page=${currentPage}`;
+            place.toLowerCase().replace(/\s+/g, "-").replace(/,/g, "")
+          )}/${encodeURIComponent(
+            keyword.toLowerCase().replace(/\s+/g, "-")
+          )}?page=${currentPage}`;
 
       console.log(`Navigating to: ${pageUrl}`);
 
@@ -206,6 +206,8 @@ const searchSuperPages = async (req, res) => {
                 phoneEl.innerText.trim() ||
                 phoneEl.getAttribute("href")?.replace("tel:", "") ||
                 "";
+              // Clean phone number - remove "Call Now" and other text
+              phone = phone.replace(/Call Now/gi, "").replace(/Click to Call/gi, "").trim();
             }
 
             // Extract address
@@ -318,14 +320,14 @@ const searchSuperPages = async (req, res) => {
             business.url && business.url.startsWith("http")
               ? business.url
               : business.url
-              ? `https://www.superpages.com${business.url}`
-              : "";
+                ? `https://www.superpages.com${business.url}`
+                : "";
 
           const businessId = `sp_${business.name
             .toLowerCase()
             .replace(/[^a-z0-9]/g, "_")}_${place
-            .toLowerCase()
-            .replace(/[^a-z0-9]/g, "_")}`;
+              .toLowerCase()
+              .replace(/[^a-z0-9]/g, "_")}`;
 
           const businessData = {
             userId,
@@ -419,6 +421,9 @@ const searchSuperPages = async (req, res) => {
                     );
                   }
                 }
+                // Clean phone number - remove "Call Now" and other text
+                phoneText = phoneText.replace(/Call Now/gi, "").replace(/Click to Call/gi, "").trim();
+
                 if (phoneText && phoneText.match(/[\d\s\-\(\)\+]{10,}/)) {
                   phone = phoneText;
                   break;
@@ -502,14 +507,14 @@ const searchSuperPages = async (req, res) => {
             const fullSuperPagesUrl = superPagesUrl.startsWith("http")
               ? superPagesUrl
               : superPagesUrl
-              ? `https://www.superpages.com${superPagesUrl}`
-              : "";
+                ? `https://www.superpages.com${superPagesUrl}`
+                : "";
 
             const businessId = `sp_${storeName
               .toLowerCase()
               .replace(/[^a-z0-9]/g, "_")}_${place
-              .toLowerCase()
-              .replace(/[^a-z0-9]/g, "_")}`;
+                .toLowerCase()
+                .replace(/[^a-z0-9]/g, "_")}`;
 
             const businessData = {
               userId,

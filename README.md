@@ -1,6 +1,6 @@
 # Lead Generation API
 
-Multi-source business lead scraper with Cloudflare bypass and pagination support.
+Multi-source business lead scraper with Cloudflare bypass, pagination support, and modern React dashboard.
 
 ## Features
 
@@ -14,12 +14,43 @@ Multi-source business lead scraper with Cloudflare bypass and pagination support
 - **Fresh Page Strategy**: Each page gets a new browser instance for reliability
 - **Human-like Behavior**: Random delays, realistic scrolling, proper headers
 
-## Installation
+## Quick Start
+
+### Backend Setup
 
 ```bash
+# Install backend dependencies
 npm install
-npm install puppeteer-extra-plugin-stealth
+
+# Start backend server
+npm start
 ```
+
+Backend runs on http://localhost:9000
+
+### Frontend Setup
+
+```bash
+# Navigate to frontend
+cd frontend
+
+# Install frontend dependencies
+npm install
+
+# Start development server
+npm run dev
+```
+
+Frontend runs on http://localhost:5173
+
+## Dashboard Features
+
+- **Modern UI**: Material-UI design with responsive layout
+- **14+ Scrapers**: Easy selection from sidebar
+- **Dynamic Forms**: Auto-generated based on selected scraper
+- **Real-time Results**: View data in interactive tables
+- **CSV Export**: Download results instantly
+- **Mobile Friendly**: Works on all devices
 
 ## API Endpoints
 
