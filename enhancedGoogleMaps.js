@@ -9,9 +9,11 @@ const searchGoogleMapsWithCompanyDetails = async (req, res) => {
     const {
       keyword,
       place,
-      maxResults = 20,
-      detailedScrape = false,
-      extractCompanyDetails = false,
+      maxResults = 10,
+      detailedScrape = true,
+      extractCompanyDetails = true,
+      includeCareerPageDetails = true,
+      delayBetweenRequests = 2000,
       maxCompanyDetails = 10
     } = req.body;
 
@@ -25,7 +27,7 @@ const searchGoogleMapsWithCompanyDetails = async (req, res) => {
 
     // Create a mock request/response for the original Google Maps function
     const mockReq = {
-      body: { keyword, place, maxResults, detailedScrape },
+      body: { keyword, place, maxResults, detailedScrape, delayBetweenRequests },
       user: req.user
     };
 

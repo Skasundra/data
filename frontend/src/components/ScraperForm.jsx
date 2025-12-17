@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Box, TextField, Button, Paper, Typography, CircularProgress, Alert, alpha, Chip } from '@mui/material';
+import { Box, TextField, Button, Paper, Typography, CircularProgress, Alert, alpha, Chip, FormControlLabel, Checkbox } from '@mui/material';
 import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import * as Icons from '@mui/icons-material';
 import { scrapeData } from '../services/api';
@@ -16,6 +16,13 @@ const ScraperForm = ({ scraper, onResultsReceived }) => {
     }));
   };
 
+  const handleCheckboxChange = (fieldName, checked) => {
+    setFormData(prev => ({
+      ...prev,
+      [fieldName]: checked
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -23,8 +30,14 @@ const ScraperForm = ({ scraper, onResultsReceived }) => {
 
     const payload = {};
     scraper.fields.forEach(field => {
-      const value = formData[field.name] || field.default || '';
-      payload[field.name] = field.type === 'number' ? Number(value) : value;
+      const value = formData[field.name] !== undefined ? formData[field.name] : field.default;
+      if (field.type === 'number') {
+        payload[field.name] = Number(value) || field.default || 0;
+      } else if (field.type === 'checkbox') {
+        payload[field.name] = Boolean(value);
+      } else {
+        payload[field.name] = value || '';
+      }
     });
 
     try {
@@ -135,36 +148,63 @@ const ScraperForm = ({ scraper, onResultsReceived }) => {
           }}
         >
           {scraper.fields.map((field) => (
-            <TextField
-              key={field.name}
-              label={field.label}
-              type={field.type}
-              required={field.required}
-              placeholder={field.placeholder}
-              value={formData[field.name] || ''}
-              onChange={(e) => handleChange(field.name, e.target.value)}
-              variant="outlined"
-              sx={{
-                flex: { xs: '1 1 100%', md: '1 1 calc(33.333% - 11px)' },
-                minWidth: { xs: '100%', md: '200px' },
-                '& .MuiOutlinedInput-root': {
-                  backgroundColor: alpha('#0f172a', 0.4),
-                  transition: 'all 0.2s',
-                  '&:hover': {
-                    backgroundColor: alpha('#0f172a', 0.6),
-                  },
-                  '&.Mui-focused': {
-                    backgroundColor: alpha('#0f172a', 0.6),
-                    '& fieldset': {
-                      borderWidth: '2px',
-                    }
-                  }
-                },
-                '& .MuiInputLabel-root': {
-                  fontWeight: 500,
+            field.type === 'checkbox' ? (
+              <FormControlLabel
+                key={field.name}
+                control={
+                  <Checkbox
+                    checked={formData[field.name] !== undefined ? formData[field.name] : field.default}
+                    onChange={(e) => handleCheckboxChange(field.name, e.target.checked)}
+                    sx={{
+                      color: '#818cf8',
+                      '&.Mui-checked': {
+                        color: '#6366f1',
+                      },
+                    }}
+                  />
                 }
-              }}
-            />
+                label={field.label}
+                sx={{
+                  flex: { xs: '1 1 100%', md: '1 1 calc(33.333% - 11px)' },
+                  minWidth: { xs: '100%', md: '200px' },
+                  '& .MuiFormControlLabel-label': {
+                    fontWeight: 500,
+                    color: 'text.primary',
+                  },
+                }}
+              />
+            ) : (
+              <TextField
+                key={field.name}
+                label={field.label}
+                type={field.type}
+                required={field.required}
+                placeholder={field.placeholder}
+                value={formData[field.name] || ''}
+                onChange={(e) => handleChange(field.name, e.target.value)}
+                variant="outlined"
+                sx={{
+                  flex: { xs: '1 1 100%', md: '1 1 calc(33.333% - 11px)' },
+                  minWidth: { xs: '100%', md: '200px' },
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: alpha('#0f172a', 0.4),
+                    transition: 'all 0.2s',
+                    '&:hover': {
+                      backgroundColor: alpha('#0f172a', 0.6),
+                    },
+                    '&.Mui-focused': {
+                      backgroundColor: alpha('#0f172a', 0.6),
+                      '& fieldset': {
+                        borderWidth: '2px',
+                      }
+                    }
+                  },
+                  '& .MuiInputLabel-root': {
+                    fontWeight: 500,
+                  }
+                }}
+              />
+            )
           ))}
 
           <Button

@@ -12,6 +12,21 @@ export const scraperConfigs = [
     ]
   },
   {
+    id: 'google-maps-enhanced',
+    name: 'Google Maps Enhanced',
+    endpoint: '/search-enhanced',
+    icon: 'AutoAwesome',
+    fields: [
+      { name: 'keyword', label: 'Keyword', type: 'text', required: true, placeholder: 'e.g., IT Company' },
+      { name: 'place', label: 'Location', type: 'text', required: true, placeholder: 'e.g., Shivranjni' },
+      { name: 'maxResults', label: 'Max Results', type: 'number', required: false, placeholder: '10', default: 10 },
+      { name: 'detailedScrape', label: 'Detailed Scrape', type: 'checkbox', required: false, default: true },
+      { name: 'extractCompanyDetails', label: 'Extract Company Details', type: 'checkbox', required: false, default: true },
+      { name: 'includeCareerPageDetails', label: 'Include Career Details', type: 'checkbox', required: false, default: true },
+      { name: 'delayBetweenRequests', label: 'Delay (ms)', type: 'number', required: false, placeholder: '2000', default: 2000 }
+    ]
+  },
+  {
     id: 'yellow-pages',
     name: 'Yellow Pages',
     endpoint: '/search-yellowpages',

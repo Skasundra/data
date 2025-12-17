@@ -1,14 +1,21 @@
-import { Paper, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Box, Button, IconButton, Tooltip, Chip, alpha } from '@mui/material';
+import { Paper, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Box, Button, IconButton, Tooltip, Chip, alpha, Dialog, DialogTitle, DialogContent, DialogActions, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import LanguageIcon from '@mui/icons-material/Language';
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import InfoIcon from '@mui/icons-material/Info';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import EmailIcon from '@mui/icons-material/Email';
+import PhoneIcon from '@mui/icons-material/Phone';
+import WorkIcon from '@mui/icons-material/Work';
 import { useState } from 'react';
 
 const ResultsTable = ({ results, scraperId }) => {
   const [page, setPage] = useState(0);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [selectedCompanyDetails, setSelectedCompanyDetails] = useState(null);
   const rowsPerPage = 10;
 
   if (!results || results.length === 0) {
@@ -62,6 +69,7 @@ const ResultsTable = ({ results, scraperId }) => {
 
   const columnConfig = {
     'google-maps': ['storeName', 'category', 'phone', 'googleUrl', 'bizWebsite'],
+    'google-maps-enhanced': ['storeName', 'category', 'phone', 'website', 'address', 'stars', 'companyDetails'],
     'yellow-pages': ['storeName', 'category', 'phone', 'website', 'address'],
     'yelp': ['storeName', 'category', 'phone', 'website', 'stars', 'numberOfReviews'],
     'bbb': ['storeName', 'category', 'phone', 'website', 'rating'],
@@ -98,7 +106,8 @@ const ResultsTable = ({ results, scraperId }) => {
       'stars': 'Rating',
       'numberOfReviews': 'Reviews',
       'rating': 'Rating',
-      'yelpUrl': 'Yelp URL'
+      'yelpUrl': 'Yelp URL',
+      'companyDetails': 'Company Details'
     };
     return nameMap[columnName] || columnName.charAt(0).toUpperCase() + columnName.slice(1);
   };
@@ -106,7 +115,12 @@ const ResultsTable = ({ results, scraperId }) => {
   const handleDownload = () => {
     const csv = [
       columns.join(','),
-      ...results.map(row => columns.map(col => `"${row[col] || ''}"`).join(','))
+      ...results.map(row => columns.map(col => {
+        if (col === 'companyDetails' && row[col]) {
+          return `"${JSON.stringify(row[col]).replace(/"/g, '""')}"`;
+        }
+        return `"${row[col] || ''}"`;
+      }).join(','))
     ].join('\n');
 
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -117,20 +131,170 @@ const ResultsTable = ({ results, scraperId }) => {
     a.click();
   };
 
-  return (
-    <Paper
-      elevation={0}
-      sx={{
-        background: 'rgba(30, 41, 59, 0.7)',
-        backdropFilter: 'blur(12px)',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
-        borderRadius: 3,
-        overflow: 'hidden',
-        height: '700px', // Fixed height for 10 rows + header + footer
-        display: 'flex',
-        flexDirection: 'column',
+  const handleCompanyDetailsClick = (companyDetails) => {
+    setSelectedCompanyDetails(companyDetails);
+    setDetailsOpen(true);
+  };
+
+  const renderCompanyDetailsDialog = () => (
+    <Dialog
+      open={detailsOpen}
+      onClose={() => setDetailsOpen(false)}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: {
+          background: 'rgba(30, 41, 59, 0.95)',
+          backdropFilter: 'blur(12px)',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          borderRadius: 3,
+        }
       }}
     >
+      <DialogTitle sx={{ pb: 1 }}>
+        <Typography variant="h6" sx={{ fontWeight: 700, color: '#6366f1' }}>
+          Company Details
+        </Typography>
+      </DialogTitle>
+      <DialogContent>
+        {selectedCompanyDetails && (
+          <Box sx={{ mt: 1 }}>
+            {selectedCompanyDetails.companyName && (
+              <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                {selectedCompanyDetails.companyName}
+              </Typography>
+            )}
+            
+            {selectedCompanyDetails.description && (
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                  Description
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {selectedCompanyDetails.description}
+                </Typography>
+              </Box>
+            )}
+
+            {selectedCompanyDetails.emails && selectedCompanyDetails.emails.length > 0 && (
+              <Accordion sx={{ mb: 2, background: 'rgba(15, 23, 42, 0.4)' }}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <EmailIcon sx={{ fontSize: 20, color: '#6366f1' }} />
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                      Email Addresses ({selectedCompanyDetails.emails.length})
+                    </Typography>
+                  </Box>
+                </AccordionSummary>
+                <AccordionDetails>
+                  {selectedCompanyDetails.emails.map((email, index) => (
+                    <Chip
+                      key={index}
+                      label={email}
+                      size="small"
+                      sx={{ mr: 1, mb: 1, background: 'rgba(99, 102, 241, 0.1)' }}
+                    />
+                  ))}
+                </AccordionDetails>
+              </Accordion>
+            )}
+
+            {selectedCompanyDetails.phoneNumbers && selectedCompanyDetails.phoneNumbers.length > 0 && (
+              <Accordion sx={{ mb: 2, background: 'rgba(15, 23, 42, 0.4)' }}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <PhoneIcon sx={{ fontSize: 20, color: '#6366f1' }} />
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                      Phone Numbers ({selectedCompanyDetails.phoneNumbers.length})
+                    </Typography>
+                  </Box>
+                </AccordionSummary>
+                <AccordionDetails>
+                  {selectedCompanyDetails.phoneNumbers.map((phone, index) => (
+                    <Chip
+                      key={index}
+                      label={phone}
+                      size="small"
+                      sx={{ mr: 1, mb: 1, background: 'rgba(99, 102, 241, 0.1)' }}
+                    />
+                  ))}
+                </AccordionDetails>
+              </Accordion>
+            )}
+
+            {selectedCompanyDetails.careerPage && selectedCompanyDetails.careerPage.found && (
+              <Accordion sx={{ mb: 2, background: 'rgba(15, 23, 42, 0.4)' }}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <WorkIcon sx={{ fontSize: 20, color: '#6366f1' }} />
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                      Career Information
+                    </Typography>
+                  </Box>
+                </AccordionSummary>
+                <AccordionDetails>
+                  {selectedCompanyDetails.careerPage.url && (
+                    <Box sx={{ mb: 2 }}>
+                      <Typography variant="caption" color="text.secondary">Career Page:</Typography>
+                      <Button
+                        size="small"
+                        startIcon={<LanguageIcon />}
+                        onClick={() => window.open(selectedCompanyDetails.careerPage.url, '_blank')}
+                        sx={{ ml: 1, textTransform: 'none' }}
+                      >
+                        View Career Page
+                      </Button>
+                    </Box>
+                  )}
+                  {selectedCompanyDetails.careerPage.availableJobs && selectedCompanyDetails.careerPage.availableJobs.length > 0 && (
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+                        Available Jobs ({selectedCompanyDetails.careerPage.availableJobs.length}):
+                      </Typography>
+                      {selectedCompanyDetails.careerPage.availableJobs.slice(0, 5).map((job, index) => (
+                        <Box key={index} sx={{ mb: 1, p: 1, background: 'rgba(99, 102, 241, 0.05)', borderRadius: 1 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            {job.title}
+                          </Typography>
+                          {job.description && (
+                            <Typography variant="caption" color="text.secondary">
+                              {job.description.substring(0, 100)}...
+                            </Typography>
+                          )}
+                        </Box>
+                      ))}
+                    </Box>
+                  )}
+                </AccordionDetails>
+              </Accordion>
+            )}
+          </Box>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setDetailsOpen(false)} sx={{ color: '#6366f1' }}>
+          Close
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+
+  return (
+    <>
+      {renderCompanyDetailsDialog()}
+      <Paper
+        elevation={0}
+        sx={{
+          background: 'rgba(30, 41, 59, 0.7)',
+          backdropFilter: 'blur(12px)',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          borderRadius: 3,
+          overflow: 'hidden',
+          height: '700px', // Fixed height for 10 rows + header + footer
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
       <Box sx={{ p: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2, flexShrink: 0 }}>
         <Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
@@ -231,7 +395,27 @@ const ResultsTable = ({ results, scraperId }) => {
                       py: 2,
                     }}
                   >
-                    {isUrlField(column) && row[column] ? (
+                    {column === 'companyDetails' && row[column] ? (
+                      <Tooltip title="View company details" arrow>
+                        <IconButton
+                          size="small"
+                          onClick={() => handleCompanyDetailsClick(row[column])}
+                          sx={{
+                            p: 1,
+                            background: 'rgba(16, 185, 129, 0.1)',
+                            border: '1px solid rgba(16, 185, 129, 0.2)',
+                            borderRadius: 1.5,
+                            '&:hover': {
+                              background: 'rgba(16, 185, 129, 0.2)',
+                              transform: 'scale(1.1)',
+                            },
+                            transition: 'all 0.2s',
+                          }}
+                        >
+                          <InfoIcon sx={{ fontSize: 18, color: '#10b981' }} />
+                        </IconButton>
+                      </Tooltip>
+                    ) : isUrlField(column) && row[column] ? (
                       <Tooltip title={row[column]} arrow>
                         <IconButton
                           size="small"
@@ -312,7 +496,8 @@ const ResultsTable = ({ results, scraperId }) => {
           </Button>
         </Box>
       </Box>
-    </Paper>
+      </Paper>
+    </>
   );
 };
 
