@@ -1,7 +1,8 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const cors = require("cors");   // ✅ Import CORS
+const cors = require("cors"); // ✅ Import CORS
 const { searchGoogleMaps } = require("./googleMaps");
+const { searchGoogleMapsWithCompanyDetails, extractCompanyDetailsForExistingResults } = require("./enhancedGoogleMaps");
 const { searchYellowPages } = require("./yellowPages");
 const { searchYelp } = require("./yelp");
 const { searchBBB } = require("./bbb");
@@ -26,33 +27,43 @@ app.use(bodyParser.json());
 
 // Test route
 app.get("/", (req, res) => {
-    res.json({
-        status: "running",
-        message: "Lead Generation API",
-        endpoints: {
-            googleMaps: "POST /search",
-            yellowPages: "POST /search-yellowpages",
-            yelp: "POST /search-yelp",
-            bbb: "POST /search-bbb",
-            angi: "POST /search-angi",
-            justdial: "POST /search-justdial (India)",
-            indiamart: "POST /search-indiamart (India B2B)",
-            sulekha: "POST /search-sulekha (India Services)",
-            tradeindia: "POST /search-tradeindia (India B2B)",
-            exportersindia: "POST /search-exportersindia (India Export)",
-            manta: "POST /search-manta (US Business Directory)",
-            superpages: "POST /search-superpages (US Business Directory)"
-        },
-        requiredParams: {
-            keyword: "string (e.g., 'Clinic')",
-            place: "string (e.g., 'Los Angeles')",
-            maxResults: "number (optional, default: 20)"
-        }
-    });
+  res.json({
+    status: "running",
+    message: "Lead Generation API",
+    endpoints: {
+      googleMaps: "POST /search",
+      googleMapsEnhanced: "POST /search-enhanced (with company details)",
+      extractCompanyDetails: "POST /extract-company-details",
+      yellowPages: "POST /search-yellowpages",
+      yelp: "POST /search-yelp",
+      bbb: "POST /search-bbb",
+      angi: "POST /search-angi",
+      justdial: "POST /search-justdial (India)",
+      indiamart: "POST /search-indiamart (India B2B)",
+      sulekha: "POST /search-sulekha (India Services)",
+      tradeindia: "POST /search-tradeindia (India B2B)",
+      exportersindia: "POST /search-exportersindia (India Export)",
+      manta: "POST /search-manta (US Business Directory)",
+      superpages: "POST /search-superpages (US Business Directory)",
+    },
+    requiredParams: {
+      keyword: "string (e.g., 'Clinic')",
+      place: "string (e.g., 'Los Angeles')",
+      maxResults: "number (optional, default: 20)",
+      extractCompanyDetails: "boolean (optional, for enhanced search)",
+      maxCompanyDetails: "number (optional, default: 10)",
+    },
+  });
 });
 
 // Google Maps scraping route
 app.post("/search", searchGoogleMaps);
+
+// Enhanced Google Maps scraping route with company details
+app.post("/search-enhanced", searchGoogleMapsWithCompanyDetails);
+
+// Extract company details for existing results
+app.post("/extract-company-details", extractCompanyDetailsForExistingResults);
 
 // Yellow Pages scraping route
 app.post("/search-yellowpages", searchYellowPages);
@@ -89,10 +100,9 @@ app.post("/search-yellowpages-ca", searchYellowPagesCanada);
 // SuperPages scraping route (US Business Directory)
 app.post("/search-superpages", searchSuperPages);
 
-
 app.post("/search-citysearch", searchCitySearch);
 
 // Start server
 app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+  console.log(`Server is running on http://localhost:${PORT}`);
 });
