@@ -168,5 +168,16 @@ export const scraperConfigs = [
       { name: 'place', label: 'Location', type: 'text', required: true, placeholder: 'e.g., Austin' },
       { name: 'maxResults', label: 'Max Results', type: 'number', required: false, placeholder: '20', default: 20 }
     ]
+  },
+  {
+    id: 'linkedin-scraper',
+    name: 'LinkedIn Website Scraper',
+    endpoint: '/scrape-linkedin',
+    icon: 'LinkedIn',
+    type: 'file-upload',
+    description: 'Upload CSV/Excel with LinkedIn company URLs to extract website URLs',
+    fields: [
+      { name: 'file', label: 'Upload File', type: 'file', required: true, accept: '.csv,.xlsx,.xls' }
+    ]
   }
 ];

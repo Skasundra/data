@@ -4,11 +4,15 @@ Multi-source business lead scraper with Cloudflare bypass, pagination support, a
 
 ## Features
 
-- **10 Data Sources**: 
-  - **US**: Google Maps, Yellow Pages, Yelp, BBB, Angi
+- **15 Data Sources**: 
+  - **US**: Google Maps, Yellow Pages, Yelp, BBB, Angi, Manta, SuperPages, CitySearch
+  - **Canada**: Yellow Pages Canada
   - **India**: JustDial, IndiaMART, Sulekha, TradeIndia, ExportersIndia
+  - **LinkedIn**: Company website extraction from LinkedIn profiles
 - **Detail Page Scraping**: Yelp & Angi scrape individual business pages for complete data
+- **LinkedIn URL Processing**: Upload CSV/Excel files with LinkedIn company URLs to extract websites
 - **Indian B2B Data**: IndiaMART provides GST numbers, trust seals, response rates
+- **File Upload Support**: CSV and Excel file processing for LinkedIn scraper
 - **Cloudflare Bypass**: Stealth plugin + realistic browser behavior
 - **Pagination**: Automatically scrapes multiple pages
 - **Fresh Page Strategy**: Each page gets a new browser instance for reliability
@@ -46,8 +50,9 @@ Frontend runs on http://localhost:5173
 ## Dashboard Features
 
 - **Modern UI**: Material-UI design with responsive layout
-- **14+ Scrapers**: Easy selection from sidebar
+- **15+ Scrapers**: Easy selection from sidebar including LinkedIn website extractor
 - **Dynamic Forms**: Auto-generated based on selected scraper
+- **File Upload**: CSV/Excel upload for LinkedIn URL processing
 - **Real-time Results**: View data in interactive tables
 - **CSV Export**: Download results instantly
 - **Mobile Friendly**: Works on all devices
@@ -103,6 +108,13 @@ POST /search-tradeindia
 ```
 POST /search-exportersindia
 ```
+
+### 11. LinkedIn Website Scraper
+```
+POST /scrape-linkedin
+```
+**Content-Type**: `multipart/form-data`
+**Body**: File upload (CSV/Excel with LinkedIn company URLs)
 
 ## Request Body
 
