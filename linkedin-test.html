@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkedIn Company Enrichment</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #0077b5;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        input[type="file"], input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #0077b5;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #005885;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.loading {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .results {
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            background-color: #f9f9f9;
+        }
+        .company-result {
+            background: white;
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #0077b5;
+        }
+        .company-name {
+            font-weight: bold;
+            color: #0077b5;
+            margin-bottom: 5px;
+        }
+        .company-info {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 3px;
+        }
+        .linkedin-link {
+            color: #0077b5;
+            text-decoration: none;
+        }
+        .linkedin-link:hover {
+            text-decoration: underline;
+        }
+        .download-btn {
+            background-color: #28a745;
+            margin-top: 15px;
+            width: auto;
+            display: inline-block;
+        }
+        .download-btn:hover {
+            background-color: #218838;
+        }
+        .instructions {
+            background-color: #e9ecef;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .instructions h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .instructions ul {
+            margin-bottom: 0;
+        }
+        .instructions li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔗 LinkedIn Company Enrichment</h1>
+        
+        <div class="instructions">
+            <h3>📋 Instructions:</h3>
+            <ul>
+                <li>Upload an Excel file (.xlsx or .xls) containing company data</li>
+                <li>Your Excel file should have at least one column named: <strong>companyName</strong>, <strong>company</strong>, <strong>name</strong>, or <strong>storeName</strong></li>
+                <li>Optional columns: <strong>location</strong>, <strong>address</strong>, <strong>city</strong> (helps find correct LinkedIn page)</li>
+                <li>The system will search for each company's LinkedIn page and extract detailed information</li>
+                <li>Results will include: company description, industry, size, headquarters, website, followers, etc.</li>
+            </ul>
+        </div>
+
+        <form id="linkedinForm">
+            <div class="form-group">
+                <label for="excelFile">📁 Select Excel File:</label>
+                <input type="file" id="excelFile" name="excelFile" accept=".xlsx,.xls" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="maxResults">🔢 Max Companies to Process:</label>
+                <input type="number" id="maxResults" name="maxResults" value="10" min="1" max="100">
+            </div>
+            
+            <div class="form-group">
+                <label for="delayBetweenRequests">⏱️ Delay Between Requests (ms):</label>
+                <input type="number" id="delayBetweenRequests" name="delayBetweenRequests" value="5000" min="2000" max="30000">
+            </div>
+            
+            <button type="submit" id="submitBtn">🚀 Start LinkedIn Enrichment</button>
+        </form>
+
+        <div id="status" class="status"></div>
+        <div id="results" class="results" style="display: none;"></div>
+    </div>
+
+    <script>
+        let enrichedData = [];
+
+        document.getElementById('linkedinForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            const fileInput = document.getElementById('excelFile');
+            const maxResults = document.getElementById('maxResults').value;
+            const delayBetweenRequests = document.getElementById('delayBetweenRequests').value;
+            
+            if (!fileInput.files[0]) {
+                showStatus('Please select an Excel file.', 'error');
+                return;
+            }
+            
+            formData.append('excelFile', fileInput.files[0]);
+            formData.append('maxResults', maxResults);
+            formData.append('delayBetweenRequests', delayBetweenRequests);
+            
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '🔄 Processing...';
+            
+            showStatus('📤 Uploading file and starting LinkedIn enrichment...', 'loading');
+            
+            try {
+                const response = await fetch('http://localhost:9000/linkedin-enrich', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    enrichedData = result.data;
+                    showStatus(`✅ Successfully processed ${result.metadata.totalCompanies} companies! (${result.metadata.successfulScrapes} successful, ${result.metadata.failedScrapes} failed)`, 'success');
+                    displayResults(result.data, result.metadata);
+                } else {
+                    showStatus(`❌ Error: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ Network error: ${error.message}`, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '🚀 Start LinkedIn Enrichment';
+            }
+        });
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+            statusDiv.style.display = 'block';
+        }
+
+        function displayResults(data, metadata) {
+            const resultsDiv = document.getElementById('results');
+            
+            let html = `
+                <h3>📊 Results Summary</h3>
+                <p><strong>Total Companies:</strong> ${metadata.totalCompanies}</p>
+                <p><strong>Successful Scrapes:</strong> ${metadata.successfulScrapes}</p>
+                <p><strong>Failed Scrapes:</strong> ${metadata.failedScrapes}</p>
+                <p><strong>Execution Time:</strong> ${metadata.executionTimeSeconds} seconds</p>
+                
+                <button class="download-btn" onclick="downloadCSV()">📥 Download Results as CSV</button>
+                
+                <h3>🏢 Company Details</h3>
+            `;
+            
+            data.forEach((company, index) => {
+                html += `
+                    <div class="company-result">
+                        <div class="company-name">${company.linkedinCompanyName || company.companyName || company.company || company.name || 'Unknown Company'}</div>
+                        ${company.linkedinScrapingSuccess ? `
+                            <div class="company-info"><strong>Industry:</strong> ${company.industry || 'N/A'}</div>
+                            <div class="company-info"><strong>Size:</strong> ${company.companySize || 'N/A'}</div>
+                            <div class="company-info"><strong>Headquarters:</strong> ${company.headquarters || 'N/A'}</div>
+                            <div class="company-info"><strong>Website:</strong> ${company.website ? `<a href="${company.website}" target="_blank">${company.website}</a>` : 'N/A'}</div>
+                            <div class="company-info"><strong>Followers:</strong> ${company.followers || 'N/A'}</div>
+                            <div class="company-info"><strong>LinkedIn:</strong> <a href="${company.linkedinUrl}" target="_blank" class="linkedin-link">${company.linkedinUrl}</a></div>
+                            ${company.tagline ? `<div class="company-info"><strong>Tagline:</strong> ${company.tagline}</div>` : ''}
+                            ${company.about ? `<div class="company-info"><strong>About:</strong> ${company.about.substring(0, 200)}${company.about.length > 200 ? '...' : ''}</div>` : ''}
+                        ` : `
+                            <div class="company-info" style="color: #dc3545;"><strong>❌ Failed:</strong> ${company.linkedinError || 'LinkedIn page not found'}</div>
+                        `}
+                    </div>
+                `;
+            });
+            
+            resultsDiv.innerHTML = html;
+            resultsDiv.style.display = 'block';
+        }
+
+        function downloadCSV() {
+            if (enrichedData.length === 0) {
+                alert('No data to download');
+                return;
+            }
+            
+            // Convert to CSV
+            const headers = Object.keys(enrichedData[0]);
+            const csvContent = [
+                headers.join(','),
+                ...enrichedData.map(row => 
+                    headers.map(header => {
+                        const value = row[header] || '';
+                        // Escape commas and quotes in CSV
+                        return typeof value === 'string' && (value.includes(',') || value.includes('"')) 
+                            ? `"${value.replace(/"/g, '""')}"` 
+                            : value;
+                    }).join(',')
+                )
+            ].join('\n');
+            
+            // Download
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `linkedin_enriched_companies_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>

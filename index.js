@@ -1,6 +1,8 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors"); // ✅ Import CORS
+const multer = require("multer"); // For file uploads
+const path = require("path");
 const { searchGoogleMaps } = require("./googleMaps");
 const { searchGoogleMapsWithCompanyDetails, extractCompanyDetailsForExistingResults } = require("./enhancedGoogleMaps");
 const { searchYellowPages } = require("./yellowPages");
@@ -16,6 +18,7 @@ const { searchManta } = require("./manta");
 const { searchYellowPagesCanada } = require("./yellowPagesCanada");
 const { searchSuperPages } = require("./superPages");
 const { searchCitySearch } = require("./citysearch");
+const { processExcelAndScrapeLinkedIn } = require("./linkedinScraper");
 
 const app = express();
 const PORT = process.env.PORT || 9000;
@@ -24,6 +27,21 @@ const PORT = process.env.PORT || 9000;
 app.use(cors());
 
 app.use(bodyParser.json());
+
+// Configure multer for file uploads
+const upload = multer({
+  dest: "uploads/",
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  fileFilter: (req, file, cb) => {
+    const allowedExtensions = [".xlsx", ".xls"];
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowedExtensions.includes(ext)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only Excel files (.xlsx, .xls) are allowed"));
+    }
+  }
+});
 
 // Test route
 app.get("/", (req, res) => {
@@ -45,6 +63,7 @@ app.get("/", (req, res) => {
       exportersindia: "POST /search-exportersindia (India Export)",
       manta: "POST /search-manta (US Business Directory)",
       superpages: "POST /search-superpages (US Business Directory)",
+      linkedinEnrichment: "POST /linkedin-enrich (Upload Excel file)",
     },
     requiredParams: {
       keyword: "string (e.g., 'Clinic')",
@@ -52,6 +71,12 @@ app.get("/", (req, res) => {
       maxResults: "number (optional, default: 20)",
       extractCompanyDetails: "boolean (optional, for enhanced search)",
       maxCompanyDetails: "number (optional, default: 10)",
+    },
+    linkedinEnrichmentParams: {
+      file: "Excel file (.xlsx/.xls) with company data",
+      maxResults: "number (optional, default: 50)",
+      delayBetweenRequests: "number (optional, default: 5000ms)",
+      requiredColumns: "companyName/company/name/storeName (at least one)",
     },
   });
 });
@@ -101,6 +126,9 @@ app.post("/search-yellowpages-ca", searchYellowPagesCanada);
 app.post("/search-superpages", searchSuperPages);
 
 app.post("/search-citysearch", searchCitySearch);
+
+// LinkedIn enrichment route (with file upload)
+app.post("/linkedin-enrich", upload.single("excelFile"), processExcelAndScrapeLinkedIn);
 
 // Start server
 app.listen(PORT, () => {
