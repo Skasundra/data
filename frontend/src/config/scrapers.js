@@ -179,5 +179,14 @@ export const scraperConfigs = [
     fields: [
       { name: 'file', label: 'Upload File', type: 'file', required: true, accept: '.csv,.xlsx,.xls' }
     ]
+  },
+  {
+    id: 'map-radius-search',
+    name: 'Map Radius Search',
+    endpoint: '/search-radius',
+    icon: 'MyLocation',
+    type: 'map-search',
+    description: 'Search businesses within a circular area on Google Maps',
+    fields: []
   }
 ];

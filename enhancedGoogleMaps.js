@@ -4,8 +4,8 @@ const { extractMultipleCompanyDetails } = require('./companyDetailsExtractor');
 // Enhanced Google Maps scraper with company details extraction
 const searchGoogleMapsWithCompanyDetails = async (req, res) => {
   try {
-    console.log("Starting enhanced Google Maps search with company details...");
-    
+    console.log(`[EnhancedSearch] Starting for keyword: "${req.body.keyword}" in "${req.body.place}"`);
+
     const {
       keyword,
       place,
@@ -25,95 +25,120 @@ const searchGoogleMapsWithCompanyDetails = async (req, res) => {
       });
     }
 
-    // Create a mock request/response for the original Google Maps function
+    // Capture the original response from googleMaps scraper
+    let googleMapsResults = null;
+    let statusCode = 200;
+
+    // Create a mock response object that intercepts the json/status calls
+    const mockRes = {
+      status: (code) => {
+        statusCode = code;
+        return mockRes;
+      },
+      json: (data) => {
+        googleMapsResults = data;
+        return mockRes;
+      },
+      // Handle cases where googleMaps might use send or end
+      send: (data) => {
+        googleMapsResults = data;
+        return mockRes;
+      }
+    };
+
+    // Use a copy of req to avoid side-effects
     const mockReq = {
-      body: { keyword, place, maxResults, detailedScrape, delayBetweenRequests },
+      body: { ...req.body },
       user: req.user
     };
 
-    let googleMapsResults = null;
-    
-    // Create a mock response to capture the Google Maps results
-    const mockRes = {
-      status: (code) => ({
-        json: (data) => {
-          googleMapsResults = data;
-          return data;
-        }
-      })
-    };
-
-    // Call the original Google Maps scraper
-    await searchGoogleMaps(mockReq, mockRes);
-
-    if (!googleMapsResults || googleMapsResults.status !== 200) {
-      return res.status(googleMapsResults?.status || 500).json(googleMapsResults);
+    // 1. EXECUTE BASIC SCRAPE
+    // We await this. If searchGoogleMaps is properly async, it will finish before moving on.
+    try {
+      await searchGoogleMaps(mockReq, mockRes);
+    } catch (innerError) {
+      console.error("[EnhancedSearch] Inner scraper failed:", innerError);
+      return res.status(500).json({
+        status: 500,
+        message: "Primary Google Maps scraper failed.",
+        error: innerError.message
+      });
     }
 
-    let finalResults = googleMapsResults.data;
+    // 2. CHECK RESULTS
+    if (!googleMapsResults || statusCode !== 200) {
+      console.warn(`[EnhancedSearch] Primary search returned status ${statusCode}`);
+      return res.status(statusCode || 500).json(googleMapsResults || { message: "Unknown error in primary search" });
+    }
 
-    // If company details extraction is requested
+    let finalResults = googleMapsResults.data || [];
+
+    // 3. ENHANCE WITH COMPANY DETAILS
     if (extractCompanyDetails && finalResults.length > 0) {
-      console.log("Extracting company details for businesses with websites...");
-      
-      // Filter businesses that have websites
-      const businessesWithWebsites = finalResults.filter(business => 
-        business.bizWebsite && 
-        business.bizWebsite !== '' && 
-        business.bizWebsite.startsWith('http')
+
+      // Filter candidates: Must have a valid HTTP website
+      const candidates = finalResults.filter(b =>
+        b.bizWebsite &&
+        b.bizWebsite.trim() !== '' &&
+        b.bizWebsite.startsWith('http')
       ).slice(0, maxCompanyDetails);
 
-      console.log(`Found ${businessesWithWebsites.length} businesses with websites to process`);
+      console.log(`[EnhancedSearch] Found ${candidates.length} candidates for detail extraction (Limit: ${maxCompanyDetails})`);
 
-      if (businessesWithWebsites.length > 0) {
+      if (candidates.length > 0) {
         try {
-          const companyDetails = await extractMultipleCompanyDetails(businessesWithWebsites, 3);
-          
-          // Merge company details with original results
-          finalResults = finalResults.map(business => {
-            const companyDetail = companyDetails.find(detail => 
-              detail.companyName === business.storeName || 
-              detail.website === business.bizWebsite
-            );
-            
-            if (companyDetail) {
-              return {
-                ...business,
-                companyDetails: companyDetail
-              };
-            }
-            
-            return business;
+          // Use our robust extractor with concurrency limit of 4
+          const detailedInfo = await extractMultipleCompanyDetails(candidates, 4);
+
+          // Merge Data efficiently
+          const detailsMap = new Map();
+          detailedInfo.forEach(info => {
+            // Key by website as it's most unique, fallback to name
+            if (info.website) detailsMap.set(info.website, info);
+            if (info.companyName) detailsMap.set(info.companyName, info);
           });
 
-          console.log(`Successfully extracted company details for ${companyDetails.filter(d => d.success).length} businesses`);
-        } catch (companyError) {
-          console.log(`Error extracting company details: ${companyError.message}`);
-          // Continue with original results if company details extraction fails
+          finalResults = finalResults.map(biz => {
+            // Try matching by website first
+            let enhancement = detailsMap.get(biz.bizWebsite);
+            // If not found, try name
+            if (!enhancement) enhancement = detailsMap.get(biz.storeName);
+
+            if (enhancement && enhancement.success) {
+              return {
+                ...biz,
+                companyDetails: enhancement
+              };
+            }
+            return biz;
+          });
+
+        } catch (enhancementError) {
+          console.error(`[EnhancedSearch] Detail extraction warning: ${enhancementError.message}`);
+          // We do NOT fail the request, strictly return partial results
         }
       }
     }
 
-    // Enhanced response with company details metadata
+    // 4. RETURN FINAL RESPONSE
     const response = {
       ...googleMapsResults,
       data: finalResults,
       metadata: {
-        ...googleMapsResults.metadata,
+        ...(googleMapsResults.metadata || {}),
+        enhancedMode: true,
         companyDetailsExtracted: extractCompanyDetails,
-        businessesWithWebsites: finalResults.filter(b => b.bizWebsite && b.bizWebsite !== '').length,
-        businessesWithCompanyDetails: finalResults.filter(b => b.companyDetails && b.companyDetails.success).length,
-        maxCompanyDetailsRequested: maxCompanyDetails
+        totalEnhanced: finalResults.filter(r => r.companyDetails).length
       }
     };
 
     return res.status(200).json(response);
 
   } catch (error) {
-    console.error("Error in enhanced Google Maps search:", error.message);
+    console.error("[EnhancedSearch] Critical Error:", error.message);
     return res.status(500).json({
       status: 500,
-      message: "Service temporarily unavailable. Please try again later.",
+      message: "Service temporarily unavailable.",
       error: process.env.NODE_ENV === "development" ? error.message : "Internal server error",
     });
   }
@@ -123,7 +148,7 @@ const searchGoogleMapsWithCompanyDetails = async (req, res) => {
 const extractCompanyDetailsForExistingResults = async (req, res) => {
   try {
     console.log("Extracting company details for existing results...");
-    
+
     const { businesses, maxCompanyDetails = 10 } = req.body;
 
     if (!businesses || !Array.isArray(businesses)) {
@@ -134,9 +159,9 @@ const extractCompanyDetailsForExistingResults = async (req, res) => {
     }
 
     // Filter businesses that have websites
-    const businessesWithWebsites = businesses.filter(business => 
-      business.bizWebsite && 
-      business.bizWebsite !== '' && 
+    const businessesWithWebsites = businesses.filter(business =>
+      business.bizWebsite &&
+      business.bizWebsite !== '' &&
       business.bizWebsite.startsWith('http')
     ).slice(0, maxCompanyDetails);
 
@@ -155,10 +180,10 @@ const extractCompanyDetailsForExistingResults = async (req, res) => {
 
     console.log(`Processing ${businessesWithWebsites.length} businesses with websites`);
 
-    const companyDetails = await extractMultipleCompanyDetails(businessesWithWebsites, 3);
-    
+    const companyDetails = await extractMultipleCompanyDetails(businessesWithWebsites, 4);
+
     const successfulExtractions = companyDetails.filter(detail => detail.success);
-    
+
     return res.status(200).json({
       status: 200,
       message: "Company details extracted successfully",

@@ -7,6 +7,7 @@ import Sidebar from './components/Sidebar';
 import ScraperForm from './components/ScraperForm';
 import ResultsTable from './components/ResultsTable';
 import LinkedInScraper from './components/LinkedInScraper';
+import MapRadiusSearch from './components/MapRadiusSearch';
 import MainLayout from './layouts/MainLayout';
 import { scraperConfigs } from './config/scrapers';
 
@@ -44,6 +45,8 @@ function App() {
         <MainLayout>
           {selectedScraper.id === 'linkedin-scraper' ? (
             <LinkedInScraper />
+          ) : selectedScraper.id === 'map-radius-search' ? (
+            <MapRadiusSearch />
           ) : (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <Box sx={{ flexShrink: 0 }}>

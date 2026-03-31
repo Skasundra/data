@@ -3,25 +3,49 @@ import axios from 'axios';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:9000';
 
 const api = axios.create({
-    baseURL: API_BASE_URL,
-    headers: {
-        'Content-Type': 'application/json',
-    },
+  baseURL: API_BASE_URL,
+  headers: { 'Content-Type': 'application/json' },
+  // Scraping can take a while — 3 min timeout matches the server-side limit
+  timeout: 3 * 60 * 1000,
 });
 
+// ─── Normalise errors into readable messages ──────────────────────────────────
+const normaliseError = (error) => {
+  if (error.code === 'ECONNABORTED' || error.code === 'ERR_CANCELED') {
+    throw new Error('Request timed out — the scrape is taking too long. Try fewer results.');
+  }
+  if (error.code === 'ERR_NETWORK') {
+    throw new Error('Cannot connect to backend. Make sure the server is running on port 9000.');
+  }
+  if (error.response?.status === 429) {
+    throw new Error('Rate limit reached — please wait a moment before searching again.');
+  }
+  if (error.response) {
+    throw new Error(
+      error.response.data?.message || error.response.statusText || 'Server error'
+    );
+  }
+  throw new Error(error.message || 'An unexpected error occurred');
+};
+
+// ─── Generic scraper call ─────────────────────────────────────────────────────
 export const scrapeData = async (endpoint, data) => {
-    try {
-        const response = await api.post(endpoint, data);
-        return response.data;
-    } catch (error) {
-        if (error.code === 'ERR_NETWORK') {
-            throw new Error('Cannot connect to backend. Make sure server is running on port 9000.');
-        }
-        if (error.response) {
-            throw new Error(error.response.data?.message || error.response.statusText || 'Server error');
-        }
-        throw new Error(error.message || 'An unexpected error occurred');
-    }
+  try {
+    const response = await api.post(endpoint, data);
+    return response.data;
+  } catch (error) {
+    normaliseError(error);
+  }
+};
+
+// ─── Radius search ────────────────────────────────────────────────────────────
+export const searchByRadius = async (data) => {
+  try {
+    const response = await api.post('/search-radius', data);
+    return response.data;
+  } catch (error) {
+    normaliseError(error);
+  }
 };
 
 export default api;
