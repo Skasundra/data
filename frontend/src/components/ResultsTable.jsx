@@ -82,7 +82,8 @@ const ResultsTable = ({ results, scraperId }) => {
     'manta': ['storeName', 'category', 'phone', 'website', 'address'],
     'yellowpages-ca': ['storeName', 'category', 'phone', 'website', 'address'],
     'superpages': ['storeName', 'category', 'phone', 'website', 'address'],
-    'citysearch': ['storeName', 'category', 'phone', 'website', 'address']
+    'citysearch': ['storeName', 'category', 'phone', 'website', 'address'],
+    'idbf': ['storeName', 'category', 'phone', 'address', 'pincode', 'state', 'city', 'idbfUrl']
   };
 
   const displayColumns = columnConfig[scraperId] || allColumns;
@@ -90,7 +91,7 @@ const ResultsTable = ({ results, scraperId }) => {
   const paginatedResults = results.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
 
   const isUrlField = (columnName) => {
-    const urlFields = ['website', 'bizWebsite', 'googleUrl', 'url', 'yelpUrl'];
+    const urlFields = ['website', 'bizWebsite', 'googleUrl', 'url', 'yelpUrl', 'idbfUrl'];
     return urlFields.includes(columnName);
   };
 
@@ -106,6 +107,9 @@ const ResultsTable = ({ results, scraperId }) => {
       'stars': 'Rating',
       'numberOfReviews': 'Reviews',
       'rating': 'Rating',
+      'pincode': 'Pincode',
+      'city': 'City',
+      'idbfUrl': 'IDBF Link',
       'yelpUrl': 'Yelp URL',
       'companyDetails': 'Company Details'
     };

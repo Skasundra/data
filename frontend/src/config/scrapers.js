@@ -188,5 +188,14 @@ export const scraperConfigs = [
     type: 'map-search',
     description: 'Search businesses within a circular area on Google Maps',
     fields: []
+  },
+  {
+    id: 'idbf',
+    name: 'IDBF.in (India)',
+    endpoint: '/search-idbf',
+    icon: 'Storefront',
+    type: 'idbf-scraper',
+    description: 'Scrape business leads from India Business Directory — select State, City, and Category',
+    fields: []
   }
 ];

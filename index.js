@@ -23,6 +23,7 @@ const { searchSuperPages }     = require("./superPages");
 const { searchCitySearch }     = require("./citysearch");
 const { processExcelAndScrapeLinkedIn } = require("./linkedinScraper");
 const { searchByRadius }       = require("./radiusSearch");
+const { getIdbfStates, getIdbfCategories, searchIdbf } = require("./idbf");
 
 const app  = express();
 const PORT = process.env.PORT || 9000;
@@ -130,6 +131,9 @@ app.get("/", (_req, res) => {
       citysearch:           "POST /search-citysearch",
       linkedinEnrichment:   "POST /linkedin-enrich",
       radiusSearch:         "POST /search-radius",
+      idbfStates:            "GET  /idbf-states",
+      idbfCategories:        "GET  /idbf-categories",
+      idbfSearch:            "POST /search-idbf",
     },
   });
 });
@@ -154,6 +158,9 @@ app.post("/search-yellowpages-ca",   scrapeLimiter, withTimeout(SCRAPE_TIMEOUT),
 app.post("/search-superpages",       scrapeLimiter, withTimeout(SCRAPE_TIMEOUT), searchSuperPages);
 app.post("/search-citysearch",       scrapeLimiter, withTimeout(SCRAPE_TIMEOUT), searchCitySearch);
 app.post("/search-radius",           scrapeLimiter, withTimeout(SCRAPE_TIMEOUT), searchByRadius);
+app.post("/search-idbf",             scrapeLimiter, withTimeout(SCRAPE_TIMEOUT), searchIdbf);
+app.get("/idbf-states",              apiLimiter,    getIdbfStates);
+app.get("/idbf-categories",          apiLimiter,    getIdbfCategories);
 app.post("/linkedin-enrich",         scrapeLimiter, withTimeout(10 * 60 * 1000), upload.single("excelFile"), processExcelAndScrapeLinkedIn);
 
 // ─── Global error handler ─────────────────────────────────────────────────────

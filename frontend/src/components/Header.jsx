@@ -82,7 +82,7 @@ const Header = ({ onMenuClick }) => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Chip
             icon={<AutoAwesomeIcon sx={{ fontSize: 16 }} />}
-            label="14 Sources"
+            label="15 Sources"
             size="small"
             sx={{
               display: { xs: 'none', sm: 'flex' },

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:9000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:9002';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -42,6 +42,34 @@ export const scrapeData = async (endpoint, data) => {
 export const searchByRadius = async (data) => {
   try {
     const response = await api.post('/search-radius', data);
+    return response.data;
+  } catch (error) {
+    normaliseError(error);
+  }
+};
+
+// ─── IDBF.in ─────────────────────────────────────────────────────────────────
+export const fetchIdbfStates = async () => {
+  try {
+    const response = await api.get('/idbf-states');
+    return response.data;
+  } catch (error) {
+    normaliseError(error);
+  }
+};
+
+export const fetchIdbfCategories = async (city) => {
+  try {
+    const response = await api.get('/idbf-categories', { params: { city } });
+    return response.data;
+  } catch (error) {
+    normaliseError(error);
+  }
+};
+
+export const searchIdbf = async (data) => {
+  try {
+    const response = await api.post('/search-idbf', data);
     return response.data;
   } catch (error) {
     normaliseError(error);
