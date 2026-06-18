@@ -25,15 +25,15 @@ const InfoRow = ({ icon, label, value, copyKey, href, copied, onCopy }) => {
   if (!hasValue(value)) return null;
   return (
     <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, py: 1.2,
-      borderBottom: '1px solid rgba(255,255,255,0.05)', '&:last-child': { borderBottom: 'none' } }}>
-      <Box sx={{ mt: 0.3, color: '#6366f1', flexShrink: 0 }}>{icon}</Box>
+      borderBottom: '1px solid #f0f0f0', '&:last-child': { borderBottom: 'none' } }}>
+      <Box sx={{ mt: 0.3, color: '#111111', flexShrink: 0 }}>{icon}</Box>
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1.2, mb: 0.3 }}>
           {label}
         </Typography>
         {href ? (
           <Link href={href} target="_blank" rel="noopener noreferrer"
-            sx={{ color: '#a5b4fc', fontSize: '0.875rem', wordBreak: 'break-all',
+            sx={{ color: '#111111', fontSize: '0.875rem', wordBreak: 'break-all',
               display: 'flex', alignItems: 'center', gap: 0.5 }}>
             {value} <OpenInNewIcon sx={{ fontSize: 14 }} />
           </Link>
@@ -44,7 +44,7 @@ const InfoRow = ({ icon, label, value, copyKey, href, copied, onCopy }) => {
       {copyKey && (
         <Tooltip title={copied === copyKey ? 'Copied!' : `Copy ${label}`}>
           <IconButton size="small" onClick={() => onCopy(value, copyKey)}
-            sx={{ color: copied === copyKey ? '#6366f1' : 'text.secondary', flexShrink: 0 }}>
+            sx={{ color: copied === copyKey ? '#111111' : 'text.secondary', flexShrink: 0 }}>
             <ContentCopyIcon sx={{ fontSize: 16 }} />
           </IconButton>
         </Tooltip>
@@ -79,16 +79,16 @@ const DetailModal = ({ location, onClose, onNext, onPrev, currentIndex, total, a
   return (
     <Dialog open={!!location} onClose={onClose} maxWidth="sm" fullWidth
       slotProps={{ paper: { sx: {
-        background: 'rgba(10,15,30,0.98)', backdropFilter: 'blur(24px)',
-        border: '1px solid rgba(255,255,255,0.1)', borderRadius: 3, color: '#e2e8f0',
+        background: '#ffffff',
+        border: '1px solid #e5e5e5', borderRadius: 3, color: '#111111',
       }}}}>
       <DialogTitle sx={{ p: 0 }}>
         <Box sx={{ p: 3, pb: 2,
-          background: 'linear-gradient(135deg, rgba(99,102,241,0.25) 0%, rgba(236,72,153,0.18) 100%)',
-          borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+          background: '#fafafa',
+          borderBottom: '1px solid #e5e5e5' }}>
           <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
             <Avatar sx={{ width: 54, height: 54, flexShrink: 0, fontSize: '1.5rem', fontWeight: 700,
-              background: 'linear-gradient(135deg, #6366f1 0%, #ec4899 100%)' }}>
+              background: '#111111' }}>
               {location.storeName?.[0]?.toUpperCase() ?? '?'}
             </Avatar>
             <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -96,8 +96,8 @@ const DetailModal = ({ location, onClose, onNext, onPrev, currentIndex, total, a
               {hasValue(location.category) && (
                 <Chip label={location.category} size="small"
                   icon={<CategoryIcon sx={{ fontSize: '13px !important' }} />}
-                  sx={{ bgcolor: 'rgba(99,102,241,0.2)', color: '#a5b4fc',
-                    border: '1px solid rgba(99,102,241,0.3)', height: 22, '& .MuiChip-icon': { color: '#a5b4fc' } }} />
+                  sx={{ bgcolor: '#f0f0f0', color: '#111111',
+                    border: '1px solid #e5e5e5', height: 22, '& .MuiChip-icon': { color: '#111111' } }} />
               )}
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -119,7 +119,7 @@ const DetailModal = ({ location, onClose, onNext, onPrev, currentIndex, total, a
                 </>
               )}
               <IconButton onClick={onClose} size="small"
-                sx={{ color: 'text.secondary', '&:hover': { color: '#fff', bgcolor: 'rgba(255,255,255,0.08)' } }}>
+                sx={{ color: 'text.secondary', '&:hover': { color: '#111111', bgcolor: '#f5f5f5' } }}>
                 <CloseIcon />
               </IconButton>
             </Box>
@@ -128,17 +128,17 @@ const DetailModal = ({ location, onClose, onNext, onPrev, currentIndex, total, a
             {hasValue(location.stars) && (
               <Chip icon={<StarIcon sx={{ fontSize: '13px !important', color: '#fbbf24 !important' }} />}
                 label={location.stars} size="small"
-                sx={{ bgcolor: 'rgba(251,191,36,0.15)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.3)' }} />
+                sx={{ bgcolor: '#fefce8', color: '#a16207', border: '1px solid #fde68a' }} />
             )}
             {hasValue(location.numberOfReviews) && (
               <Chip icon={<ReviewsIcon sx={{ fontSize: '13px !important' }} />}
                 label={`${location.numberOfReviews} reviews`} size="small"
-                sx={{ bgcolor: 'rgba(148,163,184,0.1)', color: '#94a3b8', border: '1px solid rgba(148,163,184,0.2)' }} />
+                sx={{ bgcolor: '#f5f5f5', color: '#6b7280', border: '1px solid #e5e5e5' }} />
             )}
             {location.distanceKm && (
               <Chip icon={<StraightenIcon sx={{ fontSize: '13px !important' }} />}
                 label={`${location.distanceKm} km away`} size="small"
-                sx={{ bgcolor: 'rgba(99,102,241,0.15)', color: '#a5b4fc', border: '1px solid rgba(99,102,241,0.3)' }} />
+                sx={{ bgcolor: '#f0f0f0', color: '#111111', border: '1px solid #e5e5e5' }} />
             )}
           </Stack>
         </Box>
@@ -146,7 +146,7 @@ const DetailModal = ({ location, onClose, onNext, onPrev, currentIndex, total, a
 
       <DialogContent sx={{ p: 3 }}>
         {streetViewUrl && (
-          <Box sx={{ mb: 2, borderRadius: 2, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <Box sx={{ mb: 2, borderRadius: 2, overflow: 'hidden', border: '1px solid #e5e5e5' }}>
             <img src={streetViewUrl} alt="Street View" style={{ width: '100%', display: 'block' }} />
           </Box>
         )}
@@ -183,7 +183,7 @@ const DetailModal = ({ location, onClose, onNext, onPrev, currentIndex, total, a
         </Box>
 
         {location.latitude && location.longitude && (
-          <Box sx={{ mt: 2, p: 2, borderRadius: 2, bgcolor: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)' }}>
+          <Box sx={{ mt: 2, p: 2, borderRadius: 2, bgcolor: '#fafafa', border: '1px solid #e5e5e5' }}>
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.8 }}>Coordinates</Typography>
             <Stack direction="row" spacing={3}>
               <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>Lat: {location.latitude.toFixed(6)}</Typography>
@@ -191,7 +191,7 @@ const DetailModal = ({ location, onClose, onNext, onPrev, currentIndex, total, a
             </Stack>
           </Box>
         )}
-        <Box sx={{ mt: 2, pt: 1.5, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <Box sx={{ mt: 2, pt: 1.5, borderTop: '1px solid #e5e5e5' }}>
           <Typography variant="caption" color="text.secondary">
             Source: {location.source} · {new Date(location.scrapedAt).toLocaleString()}
           </Typography>
@@ -201,21 +201,21 @@ const DetailModal = ({ location, onClose, onNext, onPrev, currentIndex, total, a
       <DialogActions sx={{ px: 3, pb: 3, gap: 1, flexWrap: 'wrap' }}>
         {hasValue(location.phone) && (
           <Button variant="outlined" size="small" startIcon={<PhoneIcon />} component="a" href={`tel:${location.phone}`}
-            sx={{ borderColor: 'rgba(99,102,241,0.4)', color: '#a5b4fc', '&:hover': { borderColor: '#6366f1', bgcolor: 'rgba(99,102,241,0.1)' } }}>
+            sx={{ borderColor: '#e5e5e5', color: '#111111', '&:hover': { borderColor: '#111111', bgcolor: '#f5f5f5' } }}>
             Call
           </Button>
         )}
         {hasValue(location.bizWebsite) && (
           <Button variant="outlined" size="small" startIcon={<LanguageIcon />}
             component="a" href={location.bizWebsite} target="_blank" rel="noopener noreferrer"
-            sx={{ borderColor: 'rgba(99,102,241,0.4)', color: '#a5b4fc', '&:hover': { borderColor: '#6366f1', bgcolor: 'rgba(99,102,241,0.1)' } }}>
+            sx={{ borderColor: '#e5e5e5', color: '#111111', '&:hover': { borderColor: '#111111', bgcolor: '#f5f5f5' } }}>
             Website
           </Button>
         )}
         {hasValue(location.googleUrl) && (
           <Button variant="contained" size="small" startIcon={<MapIcon />}
             component="a" href={location.googleUrl} target="_blank" rel="noopener noreferrer"
-            sx={{ background: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)', ml: 'auto !important' }}>
+            sx={{ background: '#111111', color: '#ffffff', ml: 'auto !important', '&:hover': { background: '#333333' } }}>
             View on Maps
           </Button>
         )}

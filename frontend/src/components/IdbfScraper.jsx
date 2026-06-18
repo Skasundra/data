@@ -1,53 +1,52 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Box, Paper, TextField, Button, Typography, CircularProgress,
-  Alert, Autocomplete, Chip, InputAdornment, Slider, alpha, Fade, LinearProgress,
+  Alert, Autocomplete, Chip, InputAdornment, FormControl,
+  InputLabel, Select, MenuItem, Slider, Fade, LinearProgress,
 } from '@mui/material';
 import LocationCityIcon from '@mui/icons-material/LocationCity';
 import CategoryIcon from '@mui/icons-material/Category';
 import PublicIcon from '@mui/icons-material/Public';
 import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import FilterListIcon from '@mui/icons-material/FilterList';
-import { searchIdbf } from '../services/api';
-import { IDBF_STATES, IDBF_SERVICE_OPTIONS } from '../data/idbfData';
+import { fetchIdbfStates, fetchIdbfCategories, searchIdbf } from '../services/api';
 import ResultsTable from './ResultsTable';
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 const paperSx = {
   p: 4,
-  background: 'rgba(30, 41, 59, 0.7)',
-  backdropFilter: 'blur(12px)',
-  border: '1px solid rgba(255, 255, 255, 0.08)',
+  background: '#ffffff',
+  border: '1px solid #e5e5e5',
   borderRadius: 3,
-};
-
-const gradientText = {
-  fontWeight: 700,
-  background: 'linear-gradient(45deg, #6366f1 30%, #ec4899 90%)',
-  WebkitBackgroundClip: 'text',
-  WebkitTextFillColor: 'transparent',
 };
 
 const iconBoxSx = {
   display: 'flex', alignItems: 'center', justifyContent: 'center',
   width: 56, height: 56, borderRadius: 2.5,
-  background: 'linear-gradient(135deg, #6366f1 0%, #ec4899 100%)',
-  boxShadow: '0 8px 20px -4px rgba(99, 102, 241, 0.6)',
+  background: '#111111',
+  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+  color: '#ffffff',
 };
 
 const selectSx = {
   '& .MuiOutlinedInput-root': {
-    backgroundColor: alpha('#0f172a', 0.4),
+    backgroundColor: '#fafafa',
     transition: 'all 0.2s',
-    '&:hover': { backgroundColor: alpha('#0f172a', 0.6) },
-    '&.Mui-focused': { backgroundColor: alpha('#0f172a', 0.6), '& fieldset': { borderWidth: '2px' } },
+    '&:hover': { backgroundColor: '#f5f5f5' },
+    '&.Mui-focused': { backgroundColor: '#ffffff', '& fieldset': { borderWidth: '2px' } },
   },
   '& .MuiInputLabel-root': { fontWeight: 500 },
+};
+
+const dropdownPaperSx = {
+  mt: 0.5, bgcolor: '#ffffff', border: '1px solid #e5e5e5', borderRadius: 2,
 };
 
 // ─── Component ───────────────────────────────────────────────────────────────
 const IdbfScraper = () => {
   // ── Data state ──
+  const [states, setStates] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [results, setResults] = useState([]);
 
   // ── Selection state ──
@@ -57,11 +56,13 @@ const IdbfScraper = () => {
   const [maxResults, setMaxResults] = useState(20);
 
   // ── UI state ──
+  const [loadingStates, setLoadingStates] = useState(false);
+  const [loadingCategories, setLoadingCategories] = useState(false);
   const [scraping, setScraping] = useState(false);
   const [error, setError] = useState(null);
   const [progressMsg, setProgressMsg] = useState('');
 
-  // ── Derived (instant — from static data, no API calls) ──
+  // ── Derived ──
   const cities = useMemo(() => {
     if (!selectedState) return [];
     return selectedState.cities || [];
@@ -69,11 +70,55 @@ const IdbfScraper = () => {
 
   const canScrape = selectedCity && selectedCategory && !scraping;
 
+  // ── Load states on mount ──
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      setLoadingStates(true);
+      try {
+        const res = await fetchIdbfStates();
+        if (!cancelled && res?.data) {
+          setStates(res.data);
+        }
+      } catch (err) {
+        if (!cancelled) setError('Failed to load states: ' + err.message);
+      } finally {
+        if (!cancelled) setLoadingStates(false);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, []);
+
+  // ── Load categories when city changes ──
+  useEffect(() => {
+    if (!selectedCity) { setCategories([]); return; }
+    let cancelled = false;
+    const load = async () => {
+      setLoadingCategories(true);
+      setCategories([]);
+      setSelectedCategory(null);
+      try {
+        const res = await fetchIdbfCategories(selectedCity.slug);
+        if (!cancelled && res?.data) {
+          setCategories(res.data);
+        }
+      } catch (err) {
+        if (!cancelled) setError('Failed to load categories: ' + err.message);
+      } finally {
+        if (!cancelled) setLoadingCategories(false);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [selectedCity]);
+
   // ── Reset downstream on state change ──
   const handleStateChange = useCallback((val) => {
     setSelectedState(val);
     setSelectedCity(null);
     setSelectedCategory(null);
+    setCategories([]);
     setResults([]);
     setError(null);
   }, []);
@@ -142,10 +187,10 @@ const IdbfScraper = () => {
             <PublicIcon />
           </Box>
           <Box sx={{ flexGrow: 1 }}>
-            <Typography variant="h5" sx={gradientText}>
+            <Typography variant="h5" sx={{ fontWeight: 700, color: '#111111' }}>
               IDBF.in — India Business Directory
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{ color: '#6b7280' }}>
               Select State, City, and Category to scrape business leads
             </Typography>
           </Box>
@@ -153,9 +198,9 @@ const IdbfScraper = () => {
             label="Active"
             size="small"
             sx={{
-              background: 'rgba(16, 185, 129, 0.15)',
-              border: '1px solid rgba(16, 185, 129, 0.3)',
-              color: '#10b981', fontWeight: 600, fontSize: '0.75rem',
+              background: '#f0fdf4',
+              border: '1px solid #bbf7d0',
+              color: '#16a34a', fontWeight: 600, fontSize: '0.75rem',
             }}
           />
         </Box>
@@ -164,12 +209,7 @@ const IdbfScraper = () => {
           <Alert
             severity="error"
             onClose={() => setError(null)}
-            sx={{
-              mb: 3, borderRadius: 2,
-              background: 'rgba(239, 68, 68, 0.1)',
-              border: '1px solid rgba(239, 68, 68, 0.3)',
-              '& .MuiAlert-icon': { color: '#ef4444' },
-            }}
+            sx={{ mb: 3, borderRadius: 2, border: '1px solid #fecaca' }}
           >
             {error}
           </Alert>
@@ -178,12 +218,13 @@ const IdbfScraper = () => {
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
           {/* ── Row 1: State + City ── */}
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-            {/* State */}
             <Autocomplete
-              options={IDBF_STATES}
+              options={states}
               getOptionLabel={(opt) => opt.state || ''}
               value={selectedState}
               onChange={(_e, val) => handleStateChange(val)}
+              loading={loadingStates}
+              disabled={loadingStates}
               sx={{ flex: { xs: '1 1 100%', md: '1 1 calc(50% - 8px)' }, minWidth: { xs: '100%', md: 280 }, ...selectSx }}
               renderInput={(params) => (
                 <TextField
@@ -195,12 +236,17 @@ const IdbfScraper = () => {
                     startAdornment: (
                       <>
                         <InputAdornment position="start">
-                          <PublicIcon sx={{ color: '#818cf8', fontSize: 20 }} />
+                          <PublicIcon sx={{ color: '#6b7280', fontSize: 20 }} />
                         </InputAdornment>
                         {params.InputProps.startAdornment}
                       </>
                     ),
-                    endAdornment: params.InputProps.endAdornment,
+                    endAdornment: (
+                      <>
+                        {loadingStates ? <CircularProgress size={18} /> : null}
+                        {params.InputProps.endAdornment}
+                      </>
+                    ),
                   }}
                 />
               )}
@@ -208,24 +254,21 @@ const IdbfScraper = () => {
                 <Box component="li" {...props} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Typography variant="body2">{opt.state}</Typography>
                   <Chip label={`${opt.cities?.length || 0} cities`} size="small"
-                    sx={{ height: 20, fontSize: '0.7rem', bgcolor: 'rgba(99,102,241,0.15)', color: '#a5b4fc' }} />
+                    sx={{ height: 20, fontSize: '0.7rem', bgcolor: '#f5f5f5', color: '#111111', border: '1px solid #e5e5e5' }} />
                 </Box>
               )}
               noOptionsText="No states found"
               PaperComponent={({ children }) => (
-                <Paper sx={{ mt: 0.5, bgcolor: 'rgba(15,23,42,0.98)', border: '1px solid rgba(99,102,241,0.3)', borderRadius: 2 }}>
-                  {children}
-                </Paper>
+                <Paper sx={dropdownPaperSx}>{children}</Paper>
               )}
             />
 
-            {/* City */}
             <Autocomplete
               options={cities}
               getOptionLabel={(opt) => opt.name || ''}
               value={selectedCity}
               onChange={(_e, val) => handleCityChange(val)}
-              disabled={!selectedState}
+              disabled={!selectedState || loadingStates}
               sx={{ flex: { xs: '1 1 100%', md: '1 1 calc(50% - 8px)' }, minWidth: { xs: '100%', md: 280 }, ...selectSx }}
               renderInput={(params) => (
                 <TextField
@@ -237,7 +280,7 @@ const IdbfScraper = () => {
                     startAdornment: (
                       <>
                         <InputAdornment position="start">
-                          <LocationCityIcon sx={{ color: '#818cf8', fontSize: 20 }} />
+                          <LocationCityIcon sx={{ color: '#6b7280', fontSize: 20 }} />
                         </InputAdornment>
                         {params.InputProps.startAdornment}
                       </>
@@ -247,22 +290,20 @@ const IdbfScraper = () => {
               )}
               noOptionsText={selectedState ? 'No cities in this state' : 'Select a state first'}
               PaperComponent={({ children }) => (
-                <Paper sx={{ mt: 0.5, bgcolor: 'rgba(15,23,42,0.98)', border: '1px solid rgba(99,102,241,0.3)', borderRadius: 2 }}>
-                  {children}
-                </Paper>
+                <Paper sx={dropdownPaperSx}>{children}</Paper>
               )}
             />
           </Box>
 
           {/* ── Row 2: Category + Max Results ── */}
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-            {/* Category */}
             <Autocomplete
-              options={IDBF_SERVICE_OPTIONS}
+              options={categories}
               getOptionLabel={(opt) => opt.name || ''}
               value={selectedCategory}
               onChange={(_e, val) => setSelectedCategory(val)}
-              disabled={!selectedCity}
+              loading={loadingCategories}
+              disabled={!selectedCity || loadingCategories}
               sx={{ flex: { xs: '1 1 100%', md: '1 1 calc(50% - 8px)' }, minWidth: { xs: '100%', md: 280 }, ...selectSx }}
               renderInput={(params) => (
                 <TextField
@@ -274,26 +315,37 @@ const IdbfScraper = () => {
                     startAdornment: (
                       <>
                         <InputAdornment position="start">
-                          <CategoryIcon sx={{ color: '#818cf8', fontSize: 20 }} />
+                          <CategoryIcon sx={{ color: '#6b7280', fontSize: 20 }} />
                         </InputAdornment>
                         {params.InputProps.startAdornment}
                       </>
                     ),
-                    endAdornment: params.InputProps.endAdornment,
+                    endAdornment: (
+                      <>
+                        {loadingCategories ? <CircularProgress size={18} /> : null}
+                        {params.InputProps.endAdornment}
+                      </>
+                    ),
                   }}
                 />
               )}
-              noOptionsText={selectedCity ? 'No matching categories' : 'Select a city first'}
+              renderOption={(props, opt) => (
+                <Box component="li" {...props} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="body2">{opt.name}</Typography>
+                  {opt.count && (
+                    <Chip label={`${opt.count} listings`} size="small"
+                      sx={{ height: 20, fontSize: '0.7rem', bgcolor: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' }} />
+                  )}
+                </Box>
+              )}
+              noOptionsText={selectedCity ? (loadingCategories ? 'Loading...' : 'No categories found') : 'Select a city first'}
               PaperComponent={({ children }) => (
-                <Paper sx={{ mt: 0.5, bgcolor: 'rgba(15,23,42,0.98)', border: '1px solid rgba(99,102,241,0.3)', borderRadius: 2, maxHeight: 300 }}>
-                  {children}
-                </Paper>
+                <Paper sx={{ ...dropdownPaperSx, maxHeight: 300 }}>{children}</Paper>
               )}
             />
 
-            {/* Max Results */}
             <Box sx={{ flex: { xs: '1 1 100%', md: '1 1 calc(50% - 8px)' }, minWidth: { xs: '100%', md: 280 } }}>
-              <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 600 }}>
+              <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 600, color: '#111111' }}>
                 Scrape Limit: {maxResults} results
               </Typography>
               <Slider
@@ -309,9 +361,9 @@ const IdbfScraper = () => {
                   { value: 200, label: '200' },
                 ]}
                 sx={{
-                  color: '#6366f1',
-                  '& .MuiSlider-thumb': { backgroundColor: '#6366f1' },
-                  '& .MuiSlider-markLabel': { color: 'text.secondary', fontSize: '0.7rem' },
+                  color: '#111111',
+                  '& .MuiSlider-thumb': { backgroundColor: '#111111' },
+                  '& .MuiSlider-markLabel': { color: '#6b7280', fontSize: '0.7rem' },
                 }}
               />
             </Box>
@@ -320,21 +372,21 @@ const IdbfScraper = () => {
           {/* ── Selection summary ── */}
           {(selectedState || selectedCity || selectedCategory) && (
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
-              <FilterListIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
+              <FilterListIcon sx={{ fontSize: 18, color: '#6b7280' }} />
               {selectedState && (
                 <Chip label={`State: ${selectedState.state}`} size="small"
-                  sx={{ bgcolor: 'rgba(99,102,241,0.15)', color: '#a5b4fc', border: '1px solid rgba(99,102,241,0.3)' }} />
+                  sx={{ bgcolor: '#f5f5f5', color: '#111111', border: '1px solid #e5e5e5' }} />
               )}
               {selectedCity && (
                 <Chip label={`City: ${selectedCity.name}`} size="small"
-                  sx={{ bgcolor: 'rgba(99,102,241,0.15)', color: '#a5b4fc', border: '1px solid rgba(99,102,241,0.3)' }} />
+                  sx={{ bgcolor: '#f5f5f5', color: '#111111', border: '1px solid #e5e5e5' }} />
               )}
               {selectedCategory && (
                 <Chip label={`Category: ${selectedCategory.name}`} size="small"
-                  sx={{ bgcolor: 'rgba(16,185,129,0.15)', color: '#10b981', border: '1px solid rgba(16,185,129,0.3)' }} />
+                  sx={{ bgcolor: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' }} />
               )}
               <Chip label={`Max: ${maxResults}`} size="small"
-                sx={{ bgcolor: 'rgba(251,191,36,0.15)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.3)' }} />
+                sx={{ bgcolor: '#fefce8', color: '#a16207', border: '1px solid #fde68a' }} />
             </Box>
           )}
 
@@ -348,17 +400,11 @@ const IdbfScraper = () => {
             sx={{
               minWidth: { xs: '100%', md: 220 },
               py: 1.75, px: 4, fontSize: '1rem', fontWeight: 600, borderRadius: 2,
-              background: !canScrape
-                ? 'rgba(100, 116, 139, 0.5)'
-                : 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)',
-              boxShadow: !canScrape
-                ? 'none'
-                : '0 8px 20px -4px rgba(99, 102, 241, 0.6)',
+              background: !canScrape ? '#d1d5db' : '#111111',
+              boxShadow: !canScrape ? 'none' : '0 2px 8px rgba(0,0,0,0.15)',
               '&:hover': {
-                background: canScrape
-                  ? 'linear-gradient(135deg, #818cf8 0%, #6366f1 100%)'
-                  : undefined,
-                transform: canScrape ? 'translateY(-2px)' : 'none',
+                background: canScrape ? '#333333' : undefined,
+                transform: canScrape ? 'translateY(-1px)' : 'none',
               },
               transition: 'all 0.2s ease-in-out',
             }}
@@ -371,9 +417,9 @@ const IdbfScraper = () => {
             <Fade in>
               <Box>
                 <LinearProgress
-                  sx={{ borderRadius: 1, bgcolor: 'rgba(99,102,241,0.15)', '& .MuiLinearProgress-bar': { bgcolor: '#6366f1' } }}
+                  sx={{ borderRadius: 1, bgcolor: '#f0f0f0', '& .MuiLinearProgress-bar': { bgcolor: '#111111' } }}
                 />
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.8, textAlign: 'center' }}>
+                <Typography variant="caption" sx={{ color: '#6b7280', display: 'block', mt: 0.8, textAlign: 'center' }}>
                   {progressMsg}
                 </Typography>
               </Box>

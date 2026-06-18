@@ -1,4 +1,4 @@
-import { Paper, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Box, Button, IconButton, Tooltip, Chip, alpha, Dialog, DialogTitle, DialogContent, DialogActions, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
+import { Paper, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Box, Button, IconButton, Tooltip, Chip, Dialog, DialogTitle, DialogContent, DialogActions, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import LanguageIcon from '@mui/icons-material/Language';
@@ -25,9 +25,8 @@ const ResultsTable = ({ results, scraperId }) => {
         sx={{
           p: 6,
           textAlign: 'center',
-          background: 'rgba(30, 41, 59, 0.7)',
-          backdropFilter: 'blur(12px)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          background: '#ffffff',
+          border: '1px solid #e5e5e5',
           borderRadius: 3,
         }}
       >
@@ -36,19 +35,19 @@ const ResultsTable = ({ results, scraperId }) => {
             width: 80,
             height: 80,
             borderRadius: '50%',
-            background: 'rgba(99, 102, 241, 0.1)',
+            background: '#f5f5f5',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             margin: '0 auto 16px',
           }}
         >
-          <DownloadIcon sx={{ fontSize: 40, color: '#818cf8' }} />
+          <DownloadIcon sx={{ fontSize: 40, color: '#9ca3af' }} />
         </Box>
-        <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
+        <Typography variant="h6" sx={{ mb: 1, fontWeight: 600, color: '#111111' }}>
           No Results Yet
         </Typography>
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" sx={{ color: '#6b7280' }}>
           Select a scraper and start scraping to see results here
         </Typography>
       </Paper>
@@ -59,7 +58,7 @@ const ResultsTable = ({ results, scraperId }) => {
 
   if (allColumns.length === 0) {
     return (
-      <Paper elevation={0} sx={{ p: 4, textAlign: 'center', background: 'rgba(30, 41, 59, 0.7)', borderRadius: 3 }}>
+      <Paper elevation={0} sx={{ p: 4, textAlign: 'center', background: '#ffffff', borderRadius: 3, border: '1px solid #e5e5e5' }}>
         <Typography variant="h6" color="error">
           Invalid data format received
         </Typography>
@@ -148,15 +147,14 @@ const ResultsTable = ({ results, scraperId }) => {
       fullWidth
       PaperProps={{
         sx: {
-          background: 'rgba(30, 41, 59, 0.95)',
-          backdropFilter: 'blur(12px)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          background: '#ffffff',
+          border: '1px solid #e5e5e5',
           borderRadius: 3,
         }
       }}
     >
       <DialogTitle sx={{ pb: 1 }}>
-        <Typography variant="h6" sx={{ fontWeight: 700, color: '#6366f1' }}>
+        <Typography variant="h6" sx={{ fontWeight: 700, color: '#111111' }}>
           Company Details
         </Typography>
       </DialogTitle>
@@ -174,17 +172,17 @@ const ResultsTable = ({ results, scraperId }) => {
                 <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
                   Description
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" sx={{ color: '#6b7280' }}>
                   {selectedCompanyDetails.description}
                 </Typography>
               </Box>
             )}
 
             {selectedCompanyDetails.emails && selectedCompanyDetails.emails.length > 0 && (
-              <Accordion sx={{ mb: 2, background: 'rgba(15, 23, 42, 0.4)' }}>
+              <Accordion sx={{ mb: 2, background: '#fafafa', border: '1px solid #e5e5e5' }}>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <EmailIcon sx={{ fontSize: 20, color: '#6366f1' }} />
+                    <EmailIcon sx={{ fontSize: 20, color: '#111111' }} />
                     <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                       Email Addresses ({selectedCompanyDetails.emails.length})
                     </Typography>
@@ -196,7 +194,7 @@ const ResultsTable = ({ results, scraperId }) => {
                       key={index}
                       label={email}
                       size="small"
-                      sx={{ mr: 1, mb: 1, background: 'rgba(99, 102, 241, 0.1)' }}
+                      sx={{ mr: 1, mb: 1, background: '#f5f5f5', border: '1px solid #e5e5e5' }}
                     />
                   ))}
                 </AccordionDetails>
@@ -204,10 +202,10 @@ const ResultsTable = ({ results, scraperId }) => {
             )}
 
             {selectedCompanyDetails.phoneNumbers && selectedCompanyDetails.phoneNumbers.length > 0 && (
-              <Accordion sx={{ mb: 2, background: 'rgba(15, 23, 42, 0.4)' }}>
+              <Accordion sx={{ mb: 2, background: '#fafafa', border: '1px solid #e5e5e5' }}>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <PhoneIcon sx={{ fontSize: 20, color: '#6366f1' }} />
+                    <PhoneIcon sx={{ fontSize: 20, color: '#111111' }} />
                     <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                       Phone Numbers ({selectedCompanyDetails.phoneNumbers.length})
                     </Typography>
@@ -219,7 +217,7 @@ const ResultsTable = ({ results, scraperId }) => {
                       key={index}
                       label={phone}
                       size="small"
-                      sx={{ mr: 1, mb: 1, background: 'rgba(99, 102, 241, 0.1)' }}
+                      sx={{ mr: 1, mb: 1, background: '#f5f5f5', border: '1px solid #e5e5e5' }}
                     />
                   ))}
                 </AccordionDetails>
@@ -227,10 +225,10 @@ const ResultsTable = ({ results, scraperId }) => {
             )}
 
             {selectedCompanyDetails.careerPage && selectedCompanyDetails.careerPage.found && (
-              <Accordion sx={{ mb: 2, background: 'rgba(15, 23, 42, 0.4)' }}>
+              <Accordion sx={{ mb: 2, background: '#fafafa', border: '1px solid #e5e5e5' }}>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <WorkIcon sx={{ fontSize: 20, color: '#6366f1' }} />
+                    <WorkIcon sx={{ fontSize: 20, color: '#111111' }} />
                     <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                       Career Information
                     </Typography>
@@ -239,12 +237,12 @@ const ResultsTable = ({ results, scraperId }) => {
                 <AccordionDetails>
                   {selectedCompanyDetails.careerPage.url && (
                     <Box sx={{ mb: 2 }}>
-                      <Typography variant="caption" color="text.secondary">Career Page:</Typography>
+                      <Typography variant="caption" sx={{ color: '#6b7280' }}>Career Page:</Typography>
                       <Button
                         size="small"
                         startIcon={<LanguageIcon />}
                         onClick={() => window.open(selectedCompanyDetails.careerPage.url, '_blank')}
-                        sx={{ ml: 1, textTransform: 'none' }}
+                        sx={{ ml: 1, textTransform: 'none', color: '#111111' }}
                       >
                         View Career Page
                       </Button>
@@ -252,16 +250,16 @@ const ResultsTable = ({ results, scraperId }) => {
                   )}
                   {selectedCompanyDetails.careerPage.availableJobs && selectedCompanyDetails.careerPage.availableJobs.length > 0 && (
                     <Box>
-                      <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+                      <Typography variant="caption" sx={{ color: '#6b7280', mb: 1, display: 'block' }}>
                         Available Jobs ({selectedCompanyDetails.careerPage.availableJobs.length}):
                       </Typography>
                       {selectedCompanyDetails.careerPage.availableJobs.slice(0, 5).map((job, index) => (
-                        <Box key={index} sx={{ mb: 1, p: 1, background: 'rgba(99, 102, 241, 0.05)', borderRadius: 1 }}>
+                        <Box key={index} sx={{ mb: 1, p: 1, background: '#fafafa', borderRadius: 1, border: '1px solid #f0f0f0' }}>
                           <Typography variant="body2" sx={{ fontWeight: 600 }}>
                             {job.title}
                           </Typography>
                           {job.description && (
-                            <Typography variant="caption" color="text.secondary">
+                            <Typography variant="caption" sx={{ color: '#6b7280' }}>
                               {job.description.substring(0, 100)}...
                             </Typography>
                           )}
@@ -276,7 +274,7 @@ const ResultsTable = ({ results, scraperId }) => {
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={() => setDetailsOpen(false)} sx={{ color: '#6366f1' }}>
+        <Button onClick={() => setDetailsOpen(false)} sx={{ color: '#111111' }}>
           Close
         </Button>
       </DialogActions>
@@ -289,12 +287,11 @@ const ResultsTable = ({ results, scraperId }) => {
       <Paper
         elevation={0}
         sx={{
-          background: 'rgba(30, 41, 59, 0.7)',
-          backdropFilter: 'blur(12px)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          background: '#ffffff',
+          border: '1px solid #e5e5e5',
           borderRadius: 3,
           overflow: 'hidden',
-          height: '700px', // Fixed height for 10 rows + header + footer
+          height: '700px',
           display: 'flex',
           flexDirection: 'column',
         }}
@@ -306,9 +303,7 @@ const ResultsTable = ({ results, scraperId }) => {
               variant="h6"
               sx={{
                 fontWeight: 700,
-                background: 'linear-gradient(45deg, #6366f1 30%, #ec4899 90%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
+                color: '#111111',
               }}
             >
               Results
@@ -318,19 +313,19 @@ const ResultsTable = ({ results, scraperId }) => {
               label={`${results.length} Records`}
               size="small"
               sx={{
-                background: 'rgba(16, 185, 129, 0.15)',
-                border: '1px solid rgba(16, 185, 129, 0.3)',
-                color: '#10b981',
+                background: '#f0fdf4',
+                border: '1px solid #bbf7d0',
+                color: '#16a34a',
                 fontWeight: 600,
                 fontSize: '0.75rem',
                 height: 24,
                 '& .MuiChip-icon': {
-                  color: '#10b981',
+                  color: '#16a34a',
                 }
               }}
             />
           </Box>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{ color: '#6b7280' }}>
             Showing {page * rowsPerPage + 1} - {Math.min((page + 1) * rowsPerPage, results.length)} of {results.length}
           </Typography>
         </Box>
@@ -339,15 +334,15 @@ const ResultsTable = ({ results, scraperId }) => {
           startIcon={<DownloadIcon />}
           onClick={handleDownload}
           sx={{
-            borderColor: 'rgba(99, 102, 241, 0.3)',
-            color: '#818cf8',
+            borderColor: '#d1d5db',
+            color: '#111111',
             fontWeight: 600,
             borderRadius: 2,
             px: 3,
             '&:hover': {
-              borderColor: '#6366f1',
-              background: 'rgba(99, 102, 241, 0.1)',
-              transform: 'translateY(-2px)',
+              borderColor: '#111111',
+              background: '#fafafa',
+              transform: 'translateY(-1px)',
             },
             transition: 'all 0.2s',
           }}
@@ -368,10 +363,9 @@ const ResultsTable = ({ results, scraperId }) => {
                     fontSize: '0.75rem',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    backgroundColor: 'rgba(15, 23, 42, 0.8)',
-                    backdropFilter: 'blur(12px)',
-                    borderBottom: '2px solid rgba(99, 102, 241, 0.3)',
-                    color: '#94a3b8',
+                    backgroundColor: '#fafafa',
+                    borderBottom: '2px solid #e5e5e5',
+                    color: '#6b7280',
                     py: 2,
                   }}
                 >
@@ -386,7 +380,7 @@ const ResultsTable = ({ results, scraperId }) => {
                 key={index}
                 sx={{
                   '&:hover': {
-                    backgroundColor: alpha('#6366f1', 0.05),
+                    backgroundColor: '#fafafa',
                   },
                   transition: 'background-color 0.2s',
                 }}
@@ -395,7 +389,7 @@ const ResultsTable = ({ results, scraperId }) => {
                   <TableCell
                     key={column}
                     sx={{
-                      borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                      borderBottom: '1px solid #f0f0f0',
                       py: 2,
                     }}
                   >
@@ -406,17 +400,17 @@ const ResultsTable = ({ results, scraperId }) => {
                           onClick={() => handleCompanyDetailsClick(row[column])}
                           sx={{
                             p: 1,
-                            background: 'rgba(16, 185, 129, 0.1)',
-                            border: '1px solid rgba(16, 185, 129, 0.2)',
+                            background: '#f5f5f5',
+                            border: '1px solid #e5e5e5',
                             borderRadius: 1.5,
                             '&:hover': {
-                              background: 'rgba(16, 185, 129, 0.2)',
-                              transform: 'scale(1.1)',
+                              background: '#eeeeee',
+                              transform: 'scale(1.05)',
                             },
                             transition: 'all 0.2s',
                           }}
                         >
-                          <InfoIcon sx={{ fontSize: 18, color: '#10b981' }} />
+                          <InfoIcon sx={{ fontSize: 18, color: '#111111' }} />
                         </IconButton>
                       </Tooltip>
                     ) : isUrlField(column) && row[column] ? (
@@ -426,19 +420,19 @@ const ResultsTable = ({ results, scraperId }) => {
                           onClick={() => window.open(row[column], '_blank')}
                           sx={{
                             p: 1,
-                            background: 'rgba(99, 102, 241, 0.1)',
-                            border: '1px solid rgba(99, 102, 241, 0.2)',
+                            background: '#f5f5f5',
+                            border: '1px solid #e5e5e5',
                             borderRadius: 1.5,
                             '&:hover': {
-                              background: 'rgba(99, 102, 241, 0.2)',
-                              transform: 'scale(1.1)',
+                              background: '#eeeeee',
+                              transform: 'scale(1.05)',
                             },
                             transition: 'all 0.2s',
                           }}
                         >
                           {column === 'googleUrl' ?
-                            <OpenInNewIcon sx={{ fontSize: 18, color: '#818cf8' }} /> :
-                            <LanguageIcon sx={{ fontSize: 18, color: '#818cf8' }} />
+                            <OpenInNewIcon sx={{ fontSize: 18, color: '#111111' }} /> :
+                            <LanguageIcon sx={{ fontSize: 18, color: '#111111' }} />
                           }
                         </IconButton>
                       </Tooltip>
@@ -447,7 +441,7 @@ const ResultsTable = ({ results, scraperId }) => {
                         variant="body2"
                         sx={{
                           fontSize: '0.875rem',
-                          color: row[column] ? 'text.primary' : 'text.secondary',
+                          color: row[column] ? '#111111' : '#9ca3af',
                         }}
                       >
                         {row[column] || '-'}
@@ -461,8 +455,8 @@ const ResultsTable = ({ results, scraperId }) => {
         </Table>
       </TableContainer>
 
-      <Box sx={{ p: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255, 255, 255, 0.08)', flexShrink: 0 }}>
-        <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
+      <Box sx={{ p: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #e5e5e5', flexShrink: 0 }}>
+        <Typography variant="body2" sx={{ color: '#6b7280', fontSize: '0.875rem' }}>
           Page {page + 1} of {Math.ceil(results.length / rowsPerPage)}
         </Typography>
         <Box sx={{ display: 'flex', gap: 1 }}>
@@ -475,8 +469,9 @@ const ResultsTable = ({ results, scraperId }) => {
               borderRadius: 2,
               fontWeight: 600,
               px: 2,
+              color: '#111111',
               '&:hover': {
-                background: 'rgba(99, 102, 241, 0.1)',
+                background: '#f5f5f5',
               }
             }}
           >
@@ -491,8 +486,9 @@ const ResultsTable = ({ results, scraperId }) => {
               borderRadius: 2,
               fontWeight: 600,
               px: 2,
+              color: '#111111',
               '&:hover': {
-                background: 'rgba(99, 102, 241, 0.1)',
+                background: '#f5f5f5',
               }
             }}
           >

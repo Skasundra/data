@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Box, TextField, Button, Paper, Typography, CircularProgress, Alert, alpha, Chip, FormControlLabel, Checkbox } from '@mui/material';
+import { Box, TextField, Button, Paper, Typography, CircularProgress, Alert, Chip, FormControlLabel, Checkbox } from '@mui/material';
 import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import * as Icons from '@mui/icons-material';
 import { scrapeData } from '../services/api';
@@ -68,9 +68,8 @@ const ScraperForm = ({ scraper, onResultsReceived }) => {
       elevation={0}
       sx={{
         p: 4,
-        background: 'rgba(30, 41, 59, 0.7)',
-        backdropFilter: 'blur(12px)',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
+        background: '#ffffff',
+        border: '1px solid #e5e5e5',
         borderRadius: 3,
       }}
     >
@@ -83,11 +82,13 @@ const ScraperForm = ({ scraper, onResultsReceived }) => {
             width: 56,
             height: 56,
             borderRadius: 2.5,
-            background: 'linear-gradient(135deg, #6366f1 0%, #ec4899 100%)',
-            boxShadow: '0 8px 20px -4px rgba(99, 102, 241, 0.6)',
+            background: '#111111',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
           }}
         >
-          {getIcon(scraper.icon)}
+          <Box sx={{ color: '#ffffff' }}>
+            {getIcon(scraper.icon)}
+          </Box>
         </Box>
         <Box sx={{ flexGrow: 1 }}>
           <Typography
@@ -95,14 +96,12 @@ const ScraperForm = ({ scraper, onResultsReceived }) => {
             sx={{
               fontWeight: 700,
               mb: 0.5,
-              background: 'linear-gradient(45deg, #6366f1 30%, #ec4899 90%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
+              color: '#111111',
             }}
           >
             {scraper.name}
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{ color: '#6b7280' }}>
             Configure your search parameters below
           </Typography>
         </Box>
@@ -110,9 +109,9 @@ const ScraperForm = ({ scraper, onResultsReceived }) => {
           label="Active"
           size="small"
           sx={{
-            background: 'rgba(16, 185, 129, 0.15)',
-            border: '1px solid rgba(16, 185, 129, 0.3)',
-            color: '#10b981',
+            background: '#f0fdf4',
+            border: '1px solid #bbf7d0',
+            color: '#16a34a',
             fontWeight: 600,
             fontSize: '0.75rem',
           }}
@@ -125,11 +124,7 @@ const ScraperForm = ({ scraper, onResultsReceived }) => {
           sx={{
             mb: 3,
             borderRadius: 2,
-            background: 'rgba(239, 68, 68, 0.1)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-            '& .MuiAlert-icon': {
-              color: '#ef4444',
-            }
+            border: '1px solid #fecaca',
           }}
           onClose={() => setError(null)}
         >
@@ -156,9 +151,9 @@ const ScraperForm = ({ scraper, onResultsReceived }) => {
                     checked={formData[field.name] !== undefined ? formData[field.name] : field.default}
                     onChange={(e) => handleCheckboxChange(field.name, e.target.checked)}
                     sx={{
-                      color: '#818cf8',
+                      color: '#9ca3af',
                       '&.Mui-checked': {
-                        color: '#6366f1',
+                        color: '#111111',
                       },
                     }}
                   />
@@ -169,7 +164,7 @@ const ScraperForm = ({ scraper, onResultsReceived }) => {
                   minWidth: { xs: '100%', md: '200px' },
                   '& .MuiFormControlLabel-label': {
                     fontWeight: 500,
-                    color: 'text.primary',
+                    color: '#111111',
                   },
                 }}
               />
@@ -187,13 +182,13 @@ const ScraperForm = ({ scraper, onResultsReceived }) => {
                   flex: { xs: '1 1 100%', md: '1 1 calc(33.333% - 11px)' },
                   minWidth: { xs: '100%', md: '200px' },
                   '& .MuiOutlinedInput-root': {
-                    backgroundColor: alpha('#0f172a', 0.4),
+                    backgroundColor: '#fafafa',
                     transition: 'all 0.2s',
                     '&:hover': {
-                      backgroundColor: alpha('#0f172a', 0.6),
+                      backgroundColor: '#f5f5f5',
                     },
                     '&.Mui-focused': {
-                      backgroundColor: alpha('#0f172a', 0.6),
+                      backgroundColor: '#ffffff',
                       '& fieldset': {
                         borderWidth: '2px',
                       }
@@ -221,18 +216,12 @@ const ScraperForm = ({ scraper, onResultsReceived }) => {
               fontSize: '1rem',
               fontWeight: 600,
               borderRadius: 2,
-              background: loading
-                ? 'rgba(100, 116, 139, 0.5)'
-                : 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)',
-              boxShadow: loading
-                ? 'none'
-                : '0 8px 20px -4px rgba(99, 102, 241, 0.6)',
+              background: loading ? '#d1d5db' : '#111111',
+              boxShadow: loading ? 'none' : '0 2px 8px rgba(0,0,0,0.15)',
               '&:hover': {
-                background: 'linear-gradient(135deg, #818cf8 0%, #6366f1 100%)',
-                transform: loading ? 'none' : 'translateY(-2px)',
-                boxShadow: loading
-                  ? 'none'
-                  : '0 12px 24px -4px rgba(99, 102, 241, 0.7)',
+                background: loading ? '#d1d5db' : '#333333',
+                transform: loading ? 'none' : 'translateY(-1px)',
+                boxShadow: loading ? 'none' : '0 4px 12px rgba(0,0,0,0.2)',
               },
               transition: 'all 0.2s ease-in-out',
             }}
@@ -243,7 +232,7 @@ const ScraperForm = ({ scraper, onResultsReceived }) => {
 
         {loading && (
           <Box sx={{ textAlign: 'center', mt: 2 }}>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" sx={{ color: '#6b7280' }}>
               Please wait while we fetch your data...
             </Typography>
           </Box>

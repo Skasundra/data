@@ -15,11 +15,11 @@ const FilterPanel = ({ filters, onChange }) => {
     <Box>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Badge badgeContent={activeCount} color="primary"
-          sx={{ '& .MuiBadge-badge': { bgcolor: '#6366f1', fontSize: '0.65rem', minWidth: 16, height: 16 } }}>
+          sx={{ '& .MuiBadge-badge': { bgcolor: '#111111', fontSize: '0.65rem', minWidth: 16, height: 16 } }}>
           <IconButton size="small" onClick={() => setOpen((v) => !v)}
-            sx={{ color: activeCount > 0 ? '#a5b4fc' : 'text.secondary',
-              bgcolor: activeCount > 0 ? 'rgba(99,102,241,0.15)' : 'transparent',
-              border: activeCount > 0 ? '1px solid rgba(99,102,241,0.3)' : '1px solid transparent',
+            sx={{ color: activeCount > 0 ? '#111111' : 'text.secondary',
+              bgcolor: activeCount > 0 ? '#f5f5f5' : 'transparent',
+              border: activeCount > 0 ? '1px solid #e5e5e5' : '1px solid transparent',
               borderRadius: 1.5, gap: 0.5, px: 1, py: 0.5 }}>
             <FilterListIcon sx={{ fontSize: 16 }} />
             <Typography variant="caption" sx={{ fontWeight: 600 }}>Filters</Typography>
@@ -35,14 +35,14 @@ const FilterPanel = ({ filters, onChange }) => {
         )}
       </Box>
       <Collapse in={open}>
-        <Box sx={{ mt: 1.5, p: 2, borderRadius: 2, bgcolor: 'rgba(15,23,42,0.5)',
-          border: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Box sx={{ mt: 1.5, p: 2, borderRadius: 2, bgcolor: '#fafafa',
+          border: '1px solid #e5e5e5', display: 'flex', flexDirection: 'column', gap: 2 }}>
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
             {[['hasPhone', 'Has Phone'], ['hasWebsite', 'Has Website']].map(([key, label]) => (
               <Chip key={key} label={label} size="small" clickable onClick={() => set(key, !filters[key])}
-                sx={{ bgcolor: filters[key] ? 'rgba(99,102,241,0.25)' : 'rgba(255,255,255,0.05)',
-                  color: filters[key] ? '#a5b4fc' : 'text.secondary',
-                  border: filters[key] ? '1px solid rgba(99,102,241,0.4)' : '1px solid rgba(255,255,255,0.08)' }} />
+                sx={{ bgcolor: filters[key] ? '#f0f0f0' : '#ffffff',
+                  color: filters[key] ? '#111111' : 'text.secondary',
+                  border: filters[key] ? '1px solid #d1d5db' : '1px solid #e5e5e5' }} />
             ))}
           </Box>
           <Box>
@@ -52,7 +52,7 @@ const FilterPanel = ({ filters, onChange }) => {
             <Slider value={filters.minRating} onChange={(_, v) => set('minRating', v)}
               min={0} max={5} step={0.5}
               marks={[{ value: 0, label: '0' }, { value: 2.5, label: '2.5' }, { value: 5, label: '5' }]}
-              sx={{ color: '#6366f1', '& .MuiSlider-thumb': { backgroundColor: '#6366f1' },
+              sx={{ color: '#111111', '& .MuiSlider-thumb': { backgroundColor: '#111111' },
                 '& .MuiSlider-markLabel': { fontSize: '0.65rem' } }} />
           </Box>
           <Box>

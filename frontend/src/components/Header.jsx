@@ -10,9 +10,8 @@ const Header = ({ onMenuClick }) => {
       elevation={0}
       sx={{ 
         zIndex: (theme) => theme.zIndex.drawer + 1,
-        background: 'rgba(15, 23, 42, 0.8)',
-        backdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+        background: '#ffffff',
+        borderBottom: '1px solid #e5e5e5',
       }}
     >
       <Toolbar sx={{ minHeight: { xs: 64, sm: 70 }, px: { xs: 2, sm: 3 } }}>
@@ -23,8 +22,9 @@ const Header = ({ onMenuClick }) => {
           sx={{ 
             mr: 2, 
             display: { sm: 'none' },
+            color: '#111111',
             '&:hover': {
-              backgroundColor: 'rgba(99, 102, 241, 0.15)',
+              backgroundColor: 'rgba(0, 0, 0, 0.04)',
             }
           }}
         >
@@ -40,11 +40,11 @@ const Header = ({ onMenuClick }) => {
               width: 42,
               height: 42,
               borderRadius: 2.5,
-              background: 'linear-gradient(135deg, #6366f1 0%, #ec4899 100%)',
-              boxShadow: '0 8px 20px -4px rgba(99, 102, 241, 0.6)',
+              background: '#111111',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
             }}
           >
-            <TravelExploreIcon sx={{ fontSize: 26, color: 'white' }} />
+            <TravelExploreIcon sx={{ fontSize: 24, color: 'white' }} />
           </Box>
           
           <Box>
@@ -57,19 +57,16 @@ const Header = ({ onMenuClick }) => {
                 fontSize: { xs: '1.1rem', sm: '1.3rem' },
                 lineHeight: 1.2,
                 letterSpacing: '-0.02em',
+                color: '#111111',
               }}
             >
-              LeadGen <Box component="span" sx={{ 
-                background: 'linear-gradient(45deg, #6366f1 30%, #ec4899 90%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}>Pro</Box>
+              LeadGen <Box component="span" sx={{ fontWeight: 300, color: '#666666' }}>Pro</Box>
             </Typography>
             <Typography 
               variant="caption" 
               sx={{ 
                 display: { xs: 'none', md: 'block' },
-                color: 'text.secondary',
+                color: '#6b7280',
                 fontSize: '0.75rem',
                 lineHeight: 1,
               }}
@@ -86,14 +83,14 @@ const Header = ({ onMenuClick }) => {
             size="small"
             sx={{
               display: { xs: 'none', sm: 'flex' },
-              background: 'rgba(99, 102, 241, 0.15)',
-              border: '1px solid rgba(99, 102, 241, 0.3)',
-              color: '#818cf8',
+              background: '#f5f5f5',
+              border: '1px solid #e5e5e5',
+              color: '#111111',
               fontWeight: 600,
               fontSize: '0.75rem',
               height: 28,
               '& .MuiChip-icon': {
-                color: '#818cf8',
+                color: '#111111',
               }
             }}
           />

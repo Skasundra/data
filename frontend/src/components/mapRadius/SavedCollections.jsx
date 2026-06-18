@@ -21,15 +21,15 @@ const SavedCollections = ({ results, onRestore }) => {
   };
 
   return (
-    <Box sx={{ p: 2, borderRadius: 2, bgcolor: 'rgba(15,23,42,0.5)',
-      border: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+    <Box sx={{ p: 2, borderRadius: 2, bgcolor: '#fafafa',
+      border: '1px solid #e5e5e5', display: 'flex', flexDirection: 'column', gap: 1.5 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <BookmarkIcon sx={{ fontSize: 16, color: '#a5b4fc' }} />
-        <Typography variant="caption" sx={{ fontWeight: 600, color: '#a5b4fc', flex: 1 }}>Saved Collections</Typography>
+        <BookmarkIcon sx={{ fontSize: 16, color: '#111111' }} />
+        <Typography variant="caption" sx={{ fontWeight: 600, color: '#111111', flex: 1 }}>Saved Collections</Typography>
         {results.length > 0 && (
           <Tooltip title="Save current results">
             <IconButton size="small" onClick={() => setShowInput((v) => !v)}
-              sx={{ color: '#a5b4fc', bgcolor: 'rgba(99,102,241,0.12)', p: 0.4 }}>
+              sx={{ color: '#111111', bgcolor: '#f0f0f0', p: 0.4 }}>
               <AddIcon sx={{ fontSize: 14 }} />
             </IconButton>
           </Tooltip>
@@ -42,7 +42,7 @@ const SavedCollections = ({ results, onRestore }) => {
             onKeyDown={(e) => e.key === 'Enter' && handleSave()}
             sx={{ flex: 1, '& .MuiInputBase-input': { fontSize: '0.8rem', py: 0.7 } }} />
           <Button size="small" variant="contained" onClick={handleSave} disabled={!saveName.trim()}
-            sx={{ background: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)', minWidth: 0, px: 1.5 }}>
+            sx={{ background: '#111111', color: '#ffffff', minWidth: 0, px: 1.5, '&:hover': { background: '#333333' } }}>
             Save
           </Button>
         </Box>
@@ -53,7 +53,7 @@ const SavedCollections = ({ results, onRestore }) => {
         </Typography>
       ) : Object.entries(collections).map(([name, col]) => (
         <Box key={name} sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.5,
-          borderBottom: '1px solid rgba(255,255,255,0.04)', '&:last-child': { borderBottom: 'none' } }}>
+          borderBottom: '1px solid #f0f0f0', '&:last-child': { borderBottom: 'none' } }}>
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.8rem' }} noWrap>{name}</Typography>
             <Typography variant="caption" color="text.secondary">
@@ -61,9 +61,9 @@ const SavedCollections = ({ results, onRestore }) => {
             </Typography>
           </Box>
           <Chip label={col.count} size="small"
-            sx={{ height: 18, fontSize: '0.65rem', bgcolor: 'rgba(99,102,241,0.2)', color: '#a5b4fc', '& .MuiChip-label': { px: 0.8 } }} />
+            sx={{ height: 18, fontSize: '0.65rem', bgcolor: '#f0f0f0', color: '#111111', '& .MuiChip-label': { px: 0.8 } }} />
           <Tooltip title="Restore">
-            <IconButton size="small" onClick={() => onRestore(col.data)} sx={{ color: '#a5b4fc', p: 0.4 }}>
+            <IconButton size="small" onClick={() => onRestore(col.data)} sx={{ color: '#111111', p: 0.4 }}>
               <RestoreIcon sx={{ fontSize: 14 }} />
             </IconButton>
           </Tooltip>

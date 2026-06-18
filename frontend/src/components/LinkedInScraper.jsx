@@ -168,7 +168,7 @@ const LinkedInScraper = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Paper elevation={3} sx={{ p: 4 }}>
+      <Paper elevation={0} sx={{ p: 4, border: '1px solid #e5e5e5', borderRadius: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
           <LinkedIn sx={{ fontSize: 40, color: '#0077b5', mr: 2 }} />
           <Box>
@@ -195,9 +195,10 @@ const LinkedInScraper = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
             <Button
               component="label"
-              variant="outlined"
+              variant="contained"
               startIcon={<CloudUpload />}
               disabled={loading}
+              sx={{ bgcolor: '#111111', '&:hover': { bgcolor: '#333333' } }}
             >
               Choose File
               <VisuallyHiddenInput
@@ -238,7 +239,7 @@ const LinkedInScraper = () => {
             onClick={handleUploadAndScrape}
             disabled={!selectedFile || loading}
             startIcon={loading ? <CircularProgress size={20} /> : <Business />}
-            sx={{ minWidth: 200 }}
+            sx={{ minWidth: 200, bgcolor: '#111111', '&:hover': { bgcolor: '#333333' } }}
           >
             {loading ? 'Processing...' : 'Extract Websites'}
           </Button>
@@ -335,6 +336,7 @@ const LinkedInScraper = () => {
                 startIcon={<FileDownload />}
                 onClick={downloadCSV}
                 disabled={results.length === 0}
+                sx={{ bgcolor: '#111111', '&:hover': { bgcolor: '#333333' } }}
               >
                 Download CSV
               </Button>
@@ -344,7 +346,7 @@ const LinkedInScraper = () => {
 
         {/* Results List */}
         {results.length > 0 && (
-          <Paper variant="outlined" sx={{ maxHeight: 600, overflow: 'auto' }}>
+          <Paper variant="outlined" sx={{ maxHeight: 600, overflow: 'auto', border: '1px solid #e5e5e5' }}>
             <List>
               {results.map((result, index) => (
                 <ListItem key={index} divider>

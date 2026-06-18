@@ -2,30 +2,32 @@ import { createTheme } from '@mui/material/styles';
 
 const theme = createTheme({
     palette: {
-        mode: 'dark',
+        mode: 'light',
         primary: {
-            main: '#6366f1', // Indigo 500
-            light: '#818cf8',
-            dark: '#4338ca',
+            main: '#111111',
+            light: '#333333',
+            dark: '#000000',
             contrastText: '#ffffff',
         },
         secondary: {
-            main: '#ec4899', // Pink 500
-            light: '#f472b6',
-            dark: '#db2777',
+            main: '#444444',
+            light: '#666666',
+            dark: '#222222',
             contrastText: '#ffffff',
         },
         background: {
-            default: '#0f172a', // Slate 900
-            paper: 'rgba(30, 41, 59, 0.7)', // Slate 800 with opacity for glassmorphism
+            default: '#f8f8f8',
+            paper: '#ffffff',
         },
         text: {
-            primary: '#f1f5f9', // Slate 100
-            secondary: '#94a3b8', // Slate 400
+            primary: '#111111',
+            secondary: '#6b7280',
         },
         action: {
-            hover: 'rgba(255, 255, 255, 0.08)',
-        }
+            hover: 'rgba(0, 0, 0, 0.04)',
+            selected: 'rgba(0, 0, 0, 0.08)',
+        },
+        divider: '#e5e5e5',
     },
     typography: {
         fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
@@ -33,9 +35,7 @@ const theme = createTheme({
             fontWeight: 700,
             fontSize: '2.5rem',
             letterSpacing: '-0.02em',
-            background: 'linear-gradient(45deg, #6366f1 30%, #ec4899 90%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
+            color: '#111111',
         },
         h2: {
             fontWeight: 600,
@@ -49,28 +49,27 @@ const theme = createTheme({
             fontWeight: 600,
         },
         button: {
-            textTransform: 'none', // Remove uppercase default
+            textTransform: 'none',
             fontWeight: 600,
         },
     },
     shape: {
-        borderRadius: 16, // More rounded corners
+        borderRadius: 12,
     },
     components: {
         MuiCssBaseline: {
             styleOverrides: {
                 body: {
-                    backgroundImage: 'radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.15), transparent 25%), radial-gradient(circle at 85% 30%, rgba(236, 72, 153, 0.15), transparent 25%)',
-                    backgroundAttachment: 'fixed',
-                    scrollbarColor: '#475569 #0f172a',
+                    background: '#f8f8f8',
+                    scrollbarColor: '#d1d5db #f8f8f8',
                     '&::-webkit-scrollbar': {
                         width: '8px',
                     },
                     '&::-webkit-scrollbar-track': {
-                        background: '#0f172a',
+                        background: '#f8f8f8',
                     },
                     '&::-webkit-scrollbar-thumb': {
-                        backgroundColor: '#475569',
+                        backgroundColor: '#d1d5db',
                         borderRadius: '4px',
                     },
                 },
@@ -79,32 +78,31 @@ const theme = createTheme({
         MuiPaper: {
             styleOverrides: {
                 root: {
-                    backdropFilter: 'blur(12px)', // Glassmorphism
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                    border: '1px solid #e5e5e5',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)',
                 },
             },
         },
         MuiButton: {
             styleOverrides: {
                 root: {
-                    borderRadius: 12,
+                    borderRadius: 10,
                     padding: '10px 24px',
                     boxShadow: 'none',
                     transition: 'all 0.2s ease-in-out',
                     '&:hover': {
-                        transform: 'translateY(-2px)',
-                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                        transform: 'translateY(-1px)',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
                     },
                 },
                 containedPrimary: {
-                    background: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)',
+                    background: '#111111',
                     '&:hover': {
-                        background: 'linear-gradient(135deg, #818cf8 0%, #6366f1 100%)',
+                        background: '#333333',
                     }
                 },
                 containedSecondary: {
-                    background: 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)',
+                    background: '#444444',
                 }
             },
         },
@@ -114,10 +112,10 @@ const theme = createTheme({
                     '& .MuiOutlinedInput-root': {
                         transition: 'all 0.2s',
                         '&:hover fieldset': {
-                            borderColor: '#818cf8',
+                            borderColor: '#999999',
                         },
                         '&.Mui-focused fieldset': {
-                            borderColor: '#6366f1',
+                            borderColor: '#111111',
                             borderWidth: '2px',
                         },
                     }
@@ -127,12 +125,12 @@ const theme = createTheme({
         MuiTableCell: {
             styleOverrides: {
                 root: {
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                    borderBottom: '1px solid #f0f0f0',
                 },
                 head: {
                     fontWeight: 600,
-                    color: '#94a3b8',
-                    backgroundColor: 'rgba(15, 23, 42, 0.5)',
+                    color: '#6b7280',
+                    backgroundColor: '#fafafa',
                 }
             }
         }

@@ -25,6 +25,7 @@ export const CONTACT_STATUS_CONFIG = {
 };
 
 export const MAP_STYLES = {
+  light: [],
   dark: [
     { featureType: 'all', elementType: 'geometry',           stylers: [{ color: '#242f3e' }] },
     { featureType: 'all', elementType: 'labels.text.stroke', stylers: [{ color: '#242f3e' }] },
@@ -32,7 +33,6 @@ export const MAP_STYLES = {
     { featureType: 'water', elementType: 'geometry',         stylers: [{ color: '#17263c' }] },
     { featureType: 'road',  elementType: 'geometry',         stylers: [{ color: '#38414e' }] },
   ],
-  light: [],
 };
 
 export const PROGRESS_MESSAGES = [

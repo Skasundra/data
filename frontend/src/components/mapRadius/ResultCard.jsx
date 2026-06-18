@@ -32,10 +32,10 @@ const ResultCard = ({ location, selected, checked, onCheck, onClick, onHover, on
       onKeyDown={(e) => e.key === 'Enter' && onClick?.()}
       sx={{
         p: 1.5, cursor: 'pointer', borderRadius: 2, position: 'relative',
-        border: selected ? '1px solid rgba(99,102,241,0.55)' : '1px solid rgba(255,255,255,0.05)',
-        bgcolor: selected ? 'rgba(99,102,241,0.13)' : 'rgba(15,23,42,0.45)',
+        border: selected ? '1px solid #111111' : '1px solid #e5e5e5',
+        bgcolor: selected ? '#f5f5f5' : '#ffffff',
         transition: 'all 0.15s ease', outline: 'none',
-        '&:hover, &:focus-visible': { bgcolor: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.4)' },
+        '&:hover, &:focus-visible': { bgcolor: '#fafafa', border: '1px solid #d1d5db' },
       }}
     >
       {/* Contact status dot */}
@@ -51,13 +51,13 @@ const ResultCard = ({ location, selected, checked, onCheck, onClick, onHover, on
         <Box sx={{ position: 'absolute', top: 4, left: 4, zIndex: 2 }}
           onClick={(e) => { e.stopPropagation(); onCheck?.(!checked); }}>
           <Checkbox checked={!!checked} size="small"
-            sx={{ p: 0.3, color: 'rgba(99,102,241,0.5)', '&.Mui-checked': { color: '#6366f1' } }} />
+            sx={{ p: 0.3, color: '#d1d5db', '&.Mui-checked': { color: '#111111' } }} />
         </Box>
       )}
 
       <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
         <Avatar sx={{ width: 36, height: 36, flexShrink: 0, fontSize: '0.9rem', fontWeight: 700,
-          background: selected ? 'linear-gradient(135deg, #6366f1 0%, #ec4899 100%)' : 'rgba(99,102,241,0.25)' }}>
+          background: selected ? '#111111' : '#f0f0f0', color: selected ? '#ffffff' : '#111111' }}>
           {index + 1}
         </Avatar>
         <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -72,19 +72,19 @@ const ResultCard = ({ location, selected, checked, onCheck, onClick, onHover, on
           <Stack direction="row" sx={{ mt: 0.5, flexWrap: 'wrap', gap: 0.5 }}>
             {location.distanceKm && (
               <Chip label={`${location.distanceKm} km`} size="small"
-                sx={{ height: 18, fontSize: '0.65rem', bgcolor: 'rgba(99,102,241,0.2)',
-                  color: '#a5b4fc', '& .MuiChip-label': { px: 0.8 } }} />
+                sx={{ height: 18, fontSize: '0.65rem', bgcolor: '#f0f0f0',
+                  color: '#111111', '& .MuiChip-label': { px: 0.8 } }} />
             )}
             {hasValue(location.stars) && (
               <Chip icon={<StarIcon sx={{ fontSize: '10px !important', color: '#fbbf24 !important' }} />}
                 label={location.stars} size="small"
-                sx={{ height: 18, fontSize: '0.65rem', bgcolor: 'rgba(251,191,36,0.15)',
-                  color: '#fbbf24', '& .MuiChip-label': { px: 0.8 } }} />
+                sx={{ height: 18, fontSize: '0.65rem', bgcolor: '#fefce8',
+                  color: '#a16207', '& .MuiChip-label': { px: 0.8 } }} />
             )}
             {hasValue(location.phone) && (
               <Chip label={location.phone} size="small"
-                sx={{ height: 18, fontSize: '0.65rem', bgcolor: 'rgba(148,163,184,0.1)',
-                  color: '#94a3b8', '& .MuiChip-label': { px: 0.8 } }} />
+                sx={{ height: 18, fontSize: '0.65rem', bgcolor: '#f5f5f5',
+                  color: '#6b7280', '& .MuiChip-label': { px: 0.8 } }} />
             )}
           </Stack>
         </Box>
@@ -97,7 +97,7 @@ const ResultCard = ({ location, selected, checked, onCheck, onClick, onHover, on
           {hasValue(location.phone) && (
             <Tooltip title="Call">
               <IconButton size="small" component="a" href={`tel:${location.phone}`}
-                sx={{ color: '#a5b4fc', bgcolor: 'rgba(99,102,241,0.12)', p: 0.5 }}>
+                sx={{ color: '#111111', bgcolor: '#f5f5f5', p: 0.5 }}>
                 <PhoneIcon sx={{ fontSize: 14 }} />
               </IconButton>
             </Tooltip>
@@ -105,7 +105,7 @@ const ResultCard = ({ location, selected, checked, onCheck, onClick, onHover, on
           {hasValue(location.bizWebsite) && (
             <Tooltip title="Website">
               <IconButton size="small" component="a" href={location.bizWebsite} target="_blank" rel="noopener noreferrer"
-                sx={{ color: '#a5b4fc', bgcolor: 'rgba(99,102,241,0.12)', p: 0.5 }}>
+                sx={{ color: '#111111', bgcolor: '#f5f5f5', p: 0.5 }}>
                 <LanguageIcon sx={{ fontSize: 14 }} />
               </IconButton>
             </Tooltip>
@@ -113,7 +113,7 @@ const ResultCard = ({ location, selected, checked, onCheck, onClick, onHover, on
           {hasValue(location.phone) && (
             <Tooltip title={copied ? 'Copied!' : 'Copy phone'}>
               <IconButton size="small" onClick={handleCopyPhone}
-                sx={{ color: copied ? '#10b981' : '#a5b4fc', bgcolor: 'rgba(99,102,241,0.12)', p: 0.5 }}>
+                sx={{ color: copied ? '#16a34a' : '#111111', bgcolor: '#f5f5f5', p: 0.5 }}>
                 <ContentCopyIcon sx={{ fontSize: 14 }} />
               </IconButton>
             </Tooltip>

@@ -13,9 +13,8 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #0f172a;
-  /* Fallback */
-  color: #f1f5f9;
+  background-color: #f8f8f8;
+  color: #111111;
   min-height: 100vh;
 }
 
