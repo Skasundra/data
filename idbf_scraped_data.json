@@ -1,0 +1,59 @@
+{
+  "Rajasthan": {
+    "Sri Ganganagar": {
+      "Tiffin Services": [
+        {
+          "userId": "anonymous",
+          "businessId": "8a8392c1-268f-4291-9e5e-a978dc134082",
+          "storeName": "Diamond Tasty Tiffins",
+          "category": "Tiffin Services",
+          "phone": "7300188663",
+          "address": "16-H-A-Block, Near Nehru Park",
+          "pincode": "335001",
+          "state": "Rajasthan",
+          "city": "Sri Ganganagar",
+          "description": "Diamond Tasty Tiffins is a , tiffin , business located in Sri Ganganagar, Rajasthan, India.",
+          "idbfUrl": "https://sri-ganganagar.idbf.in/782752/diamond-tasty-tiffins",
+          "searchCity": "abohar",
+          "searchCategory": "tiffin-services",
+          "scrapedAt": "2026-06-26T08:36:36.022Z",
+          "source": "IDBF.in"
+        },
+        {
+          "userId": "anonymous",
+          "businessId": "ec65d245-d11e-46dc-be9a-830d3958e33c",
+          "storeName": "Shivam Deluxe Tiffin Centre",
+          "category": "Tiffin Services",
+          "phone": "9983054395",
+          "address": "7D 44, Jawahar Nagar",
+          "pincode": "335001",
+          "state": "Rajasthan",
+          "city": "Sri Ganganagar",
+          "description": "Shivam Deluxe Tiffin Centre is a , tiffin , business located in Sri Ganganagar, Rajasthan, India.",
+          "idbfUrl": "https://sri-ganganagar.idbf.in/775859/shivam-deluxe-tiffin-centre",
+          "searchCity": "abohar",
+          "searchCategory": "tiffin-services",
+          "scrapedAt": "2026-06-26T08:36:41.594Z",
+          "source": "IDBF.in"
+        },
+        {
+          "userId": "anonymous",
+          "businessId": "97f6b43a-9b6e-4773-bcba-138e0a55cb31",
+          "storeName": "Shivam Tiffin Service",
+          "category": "Tiffin Services",
+          "phone": "9887781844",
+          "address": "6-N-28, Jawhar Nahar, Near Midha Rashan Ghar",
+          "pincode": "335001",
+          "state": "Rajasthan",
+          "city": "Sri Ganganagar",
+          "description": "Shivam Tiffin Service is a , tiffin , business located in Sri Ganganagar, Rajasthan, India.",
+          "idbfUrl": "https://sri-ganganagar.idbf.in/782516/shivam-tiffin-service",
+          "searchCity": "abohar",
+          "searchCategory": "tiffin-services",
+          "scrapedAt": "2026-06-26T08:36:41.644Z",
+          "source": "IDBF.in"
+        }
+      ]
+    }
+  }
+}

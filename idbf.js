@@ -2,6 +2,8 @@ const puppeteerExtra = require("puppeteer-extra");
 const StealthPlugin = require("puppeteer-extra-plugin-stealth");
 const cheerio = require("cheerio");
 const { randomUUID } = require("crypto");
+const fs = require("fs");
+const path = require("path");
 
 puppeteerExtra.use(StealthPlugin());
 
@@ -89,10 +91,12 @@ const getIdbfStates = async (_req, res) => {
     const browser = await getBrowserInstance();
     page = await newPage(browser);
 
-    await page.goto(BASE_URL, { waitUntil: "domcontentloaded", timeout: NAV_TIMEOUT });
-    await new Promise((r) => setTimeout(r, 2000));
+    await page.goto(BASE_URL, { waitUntil: "networkidle2", timeout: NAV_TIMEOUT });
+    await new Promise((r) => setTimeout(r, 3000));
 
     const html = await page.content();
+    // Save HTML for debugging
+    fs.writeFileSync(path.join(__dirname, "debug_states.html"), html, "utf8");
     const $ = cheerio.load(html);
 
     const states = [];
@@ -173,7 +177,7 @@ const getIdbfStates = async (_req, res) => {
     // Sort states
     states.sort((a, b) => a.state.localeCompare(b.state));
 
-    log.info(`Found ${states.length} states with cities`);
+    log.info(`Found ${states.length} states with cities. Total cities: ${states.reduce((sum, s) => sum + s.cities.length, 0)}`);
 
     await page.close().catch(() => {});
     page = null;
@@ -207,17 +211,19 @@ const getIdbfCategories = async (req, res) => {
       return res.status(400).json({ status: 400, message: "city query parameter is required" });
     }
 
-    const citySlug = toSlug(city);
+    const citySlug = toSlug(String(city));
     const cityUrl = `https://${citySlug}.idbf.in/`;
-    log.info(`Fetching categories for city: ${citySlug}`);
+    log.info(`Fetching categories for city: ${citySlug} from ${cityUrl}`);
 
     const browser = await getBrowserInstance();
     page = await newPage(browser);
 
-    await page.goto(cityUrl, { waitUntil: "domcontentloaded", timeout: NAV_TIMEOUT });
-    await new Promise((r) => setTimeout(r, 2000));
+    await page.goto(cityUrl, { waitUntil: "networkidle2", timeout: NAV_TIMEOUT });
+    await new Promise((r) => setTimeout(r, 3000));
 
     const html = await page.content();
+    // Save HTML for debugging
+    fs.writeFileSync(path.join(__dirname, `debug_categories_${citySlug}.html`), html, "utf8");
     const $ = cheerio.load(html);
 
     const categories = [];
@@ -289,12 +295,58 @@ const getIdbfCategories = async (req, res) => {
  * Body: { city, category, maxResults }
  * Response: { status, data: [{ storeName, phone, address, pincode, state, ... }], metadata }
  */
+// Path to the JSON file where we'll store all scraped data
+const DATA_FILE_PATH = path.join(__dirname, "idbf_scraped_data.json");
+
+/**
+ * Helper to read existing data from JSON file with validation
+ */
+const readStoredData = () => {
+  try {
+    if (!fs.existsSync(DATA_FILE_PATH)) {
+      return {};
+    }
+    const data = fs.readFileSync(DATA_FILE_PATH, "utf8");
+    const parsed = JSON.parse(data);
+    return parsed;
+  } catch (error) {
+    log.warn(`Could not read existing data file (will start fresh): ${error.message}`);
+    return {};
+  }
+};
+
+/**
+ * Helper to write data to JSON file with validation
+ */
+const writeStoredData = (data) => {
+  try {
+    // Validate the data can be stringified
+    const jsonString = JSON.stringify(data, null, 2);
+    // Verify it can be parsed back (integrity check)
+    JSON.parse(jsonString);
+    fs.writeFileSync(DATA_FILE_PATH, jsonString, "utf8");
+    log.info(`Data successfully written to ${DATA_FILE_PATH}`);
+    return true;
+  } catch (error) {
+    log.error(`Failed to write data to JSON: ${error.message}`);
+    return false;
+  }
+};
+
+/**
+ * Check if a business with given phone already exists in the category
+ */
+const businessExists = (categoryList, phone) => {
+  if (!phone || phone === "N/A") return false;
+  return categoryList.some(b => b.phone === phone);
+};
+
 const searchIdbf = async (req, res) => {
   const startTime = Date.now();
   let searchPage = null;
 
   try {
-    const { city: rawCity, category: rawCategory, maxResults: rawMax } = req.body;
+    const { city: rawCity, category: rawCategory, maxResults: rawMax, storeData } = req.body;
 
     // ── Validation ──
     if (!rawCity || !rawCategory) {
@@ -457,7 +509,12 @@ const searchIdbf = async (req, res) => {
               if (pinMatch) pincode = pinMatch[1];
             }
 
-            return {
+            // Skip if no valid phone number
+            if (!phone || phone === "N/A") {
+              return null;
+            }
+
+            const business = {
               userId: "anonymous",
               businessId: randomUUID(),
               storeName,
@@ -474,6 +531,8 @@ const searchIdbf = async (req, res) => {
               scrapedAt: new Date().toISOString(),
               source: "IDBF.in",
             };
+
+            return business;
           } finally {
             await detailPage.close().catch(() => {});
           }
@@ -493,6 +552,39 @@ const searchIdbf = async (req, res) => {
       // Inter-batch delay
       if (i + CONCURRENCY < toScrape.length) {
         await new Promise((r) => setTimeout(r, INTER_BATCH_DELAY_MS));
+      }
+    }
+
+    // All scraping complete — now save data if enabled
+    if (storeData && businesses.length > 0) {
+      log.info(`All scraping complete. Saving ${businesses.length} businesses to JSON...`);
+      try {
+        const storedData = readStoredData();
+        let addedCount = 0;
+
+        for (const business of businesses) {
+          const stateKey = business.state || "Unknown State";
+          const cityKey = business.city || "Unknown City";
+          const categoryKey = business.category || "Unknown Category";
+
+          // Initialize hierarchy if not exists
+          if (!storedData[stateKey]) storedData[stateKey] = {};
+          if (!storedData[stateKey][cityKey]) storedData[stateKey][cityKey] = {};
+          if (!storedData[stateKey][cityKey][categoryKey]) storedData[stateKey][cityKey][categoryKey] = [];
+
+          // Avoid duplicates
+          if (!businessExists(storedData[stateKey][cityKey][categoryKey], business.phone)) {
+            storedData[stateKey][cityKey][categoryKey].push(business);
+            addedCount++;
+          }
+        }
+
+        const success = writeStoredData(storedData);
+        if (success) {
+          log.info(`Successfully added ${addedCount} new businesses to ${DATA_FILE_PATH}`);
+        }
+      } catch (err) {
+        log.error(`Failed to save data to JSON: ${err.message}`);
       }
     }
 

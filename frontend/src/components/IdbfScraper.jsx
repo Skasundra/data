@@ -3,6 +3,7 @@ import {
   Box, Paper, TextField, Button, Typography, CircularProgress,
   Alert, Autocomplete, Chip, InputAdornment, FormControl,
   InputLabel, Select, MenuItem, Slider, Fade, LinearProgress,
+  Checkbox, FormControlLabel,
 } from '@mui/material';
 import LocationCityIcon from '@mui/icons-material/LocationCity';
 import CategoryIcon from '@mui/icons-material/Category';
@@ -54,6 +55,7 @@ const IdbfScraper = () => {
   const [selectedCity, setSelectedCity] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [maxResults, setMaxResults] = useState(20);
+  const [storeData, setStoreData] = useState(false);
 
   // ── UI state ──
   const [loadingStates, setLoadingStates] = useState(false);
@@ -157,6 +159,7 @@ const IdbfScraper = () => {
         city: selectedCity.slug,
         category: selectedCategory.slug,
         maxResults,
+        storeData,
       });
 
       clearInterval(msgInterval);
@@ -390,6 +393,17 @@ const IdbfScraper = () => {
             </Box>
           )}
 
+          {/* ── Store Data Checkbox ── */}
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={storeData}
+                onChange={(e) => setStoreData(e.target.checked)}
+                color="primary"
+              />
+            }
+            label="Store Data to JSON File"
+          />
           {/* ── Scrape button ── */}
           <Button
             variant="contained"
