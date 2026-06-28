@@ -9,6 +9,8 @@ import ResultsTable from './components/ResultsTable';
 import LinkedInScraper from './components/LinkedInScraper';
 import MapRadiusSearch from './components/MapRadiusSearch';
 import IdbfScraper from './components/IdbfScraper';
+import GoogleMapsScraper from './components/GoogleMapsScraper';
+import JsonToCsvConverter from './components/JsonToCsvConverter';
 import MainLayout from './layouts/MainLayout';
 import { scraperConfigs } from './config/scrapers';
 
@@ -50,6 +52,10 @@ function App() {
             <MapRadiusSearch />
           ) : selectedScraper.id === 'idbf' ? (
             <IdbfScraper />
+          ) : selectedScraper.id === 'google-maps' ? (
+            <GoogleMapsScraper />
+          ) : selectedScraper.id === 'json-to-csv' ? (
+            <JsonToCsvConverter />
           ) : (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <Box sx={{ flexShrink: 0 }}>

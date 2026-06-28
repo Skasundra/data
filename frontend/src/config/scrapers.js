@@ -5,11 +5,9 @@ export const scraperConfigs = [
     name: 'Google Maps',
     endpoint: '/search',
     icon: 'Map',
-    fields: [
-      { name: 'keyword', label: 'Keyword', type: 'text', required: true, placeholder: 'e.g., Restaurant, Clinic' },
-      { name: 'place', label: 'Location', type: 'text', required: true, placeholder: 'e.g., Los Angeles, CA' },
-      { name: 'maxResults', label: 'Max Results', type: 'number', required: false, placeholder: '20', default: 20 }
-    ]
+    type: 'google-maps-scraper',
+    description: 'Scrape business leads from Google Maps — enter keyword and location',
+    fields: []
   },
   {
     id: 'google-maps-enhanced',
@@ -196,6 +194,15 @@ export const scraperConfigs = [
     icon: 'Storefront',
     type: 'idbf-scraper',
     description: 'Scrape business leads from India Business Directory — select State, City, and Category',
+    fields: []
+  },
+  {
+    id: 'json-to-csv',
+    name: 'JSON to CSV',
+    endpoint: '',
+    icon: 'TableChart',
+    type: 'json-to-csv',
+    description: 'Convert JSON files to CSV — auto-detect fields, filter by city/category, export',
     fields: []
   }
 ];

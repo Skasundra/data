@@ -25,3 +25,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 /logs
+
+# Scraped data files (generated at runtime)
+googlemaps_scraped_data.json
+idbf_scraped_data.json

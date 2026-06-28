@@ -1,4 +1,8 @@
 require("dotenv").config();
+
+// Must be set before requiring scraper modules (they register process listeners at load time)
+process.setMaxListeners(30);
+
 const express    = require("express");
 const bodyParser = require("body-parser");
 const cors       = require("cors");
@@ -24,6 +28,7 @@ const { searchCitySearch }     = require("./citysearch");
 const { processExcelAndScrapeLinkedIn } = require("./linkedinScraper");
 const { searchByRadius }       = require("./radiusSearch");
 const { getIdbfStates, getIdbfCategories, searchIdbf } = require("./idbf");
+const { parseJsonFile, convertJsonToCsv, listServerJsonFiles } = require("./jsonToCsv");
 
 const app  = express();
 const PORT = process.env.PORT || 9000;
@@ -162,6 +167,12 @@ app.post("/search-idbf",             scrapeLimiter, withTimeout(SCRAPE_TIMEOUT),
 app.get("/idbf-states",              apiLimiter,    getIdbfStates);
 app.get("/idbf-categories",          apiLimiter,    getIdbfCategories);
 app.post("/linkedin-enrich",         scrapeLimiter, withTimeout(10 * 60 * 1000), upload.single("excelFile"), processExcelAndScrapeLinkedIn);
+
+// ─── JSON to CSV converter routes ────────────────────────────────────────────
+const csvUpload = multer({ dest: "uploads/", limits: { fileSize: 100 * 1024 * 1024 } }); // 100MB
+app.get("/json-to-csv/server-files",  apiLimiter, listServerJsonFiles);
+app.post("/json-to-csv/parse",        apiLimiter, csvUpload.single("jsonFile"), parseJsonFile);
+app.post("/json-to-csv/convert",      apiLimiter, convertJsonToCsv);
 
 // ─── Global error handler ─────────────────────────────────────────────────────
 // eslint-disable-next-line no-unused-vars

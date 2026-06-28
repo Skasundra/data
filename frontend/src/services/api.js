@@ -76,4 +76,32 @@ export const searchIdbf = async (data) => {
   }
 };
 
+// ─── JSON to CSV Converter ────────────────────────────────────────────────────
+export const fetchServerJsonFiles = async () => {
+  try {
+    const response = await api.get('/json-to-csv/server-files');
+    return response.data;
+  } catch (error) {
+    normaliseError(error);
+  }
+};
+
+export const parseJsonForCsv = async (data) => {
+  try {
+    const response = await api.post('/json-to-csv/parse', data);
+    return response.data;
+  } catch (error) {
+    normaliseError(error);
+  }
+};
+
+export const convertJsonToCsv = async (data) => {
+  try {
+    const response = await api.post('/json-to-csv/convert', data, { responseType: 'blob' });
+    return response;
+  } catch (error) {
+    normaliseError(error);
+  }
+};
+
 export default api;
