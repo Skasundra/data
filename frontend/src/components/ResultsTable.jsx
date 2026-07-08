@@ -82,7 +82,8 @@ const ResultsTable = ({ results, scraperId }) => {
     'yellowpages-ca': ['storeName', 'category', 'phone', 'website', 'address'],
     'superpages': ['storeName', 'category', 'phone', 'website', 'address'],
     'citysearch': ['storeName', 'category', 'phone', 'website', 'address'],
-    'idbf': ['storeName', 'category', 'phone', 'address', 'pincode', 'state', 'city', 'idbfUrl']
+    'idbf': ['storeName', 'category', 'phone', 'address', 'pincode', 'state', 'city', 'idbfUrl'],
+    'advanced-google-scrape': ['storeName', 'category', 'phone', 'bizWebsite', 'address', 'stars', 'numberOfReviews', 'companyDetails', 'searchKeyword', 'searchLocation']
   };
 
   const displayColumns = columnConfig[scraperId] || allColumns;

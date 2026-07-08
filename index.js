@@ -29,6 +29,7 @@ const { processExcelAndScrapeLinkedIn } = require("./linkedinScraper");
 const { searchByRadius }       = require("./radiusSearch");
 const { getIdbfStates, getIdbfCategories, searchIdbf } = require("./idbf");
 const { parseJsonFile, convertJsonToCsv, listServerJsonFiles } = require("./jsonToCsv");
+const { advancedGoogleRouter } = require("./advancedGoogleScraper");
 
 const app  = express();
 const PORT = process.env.PORT || 9000;
@@ -167,6 +168,9 @@ app.post("/search-idbf",             scrapeLimiter, withTimeout(SCRAPE_TIMEOUT),
 app.get("/idbf-states",              apiLimiter,    getIdbfStates);
 app.get("/idbf-categories",          apiLimiter,    getIdbfCategories);
 app.post("/linkedin-enrich",         scrapeLimiter, withTimeout(10 * 60 * 1000), upload.single("excelFile"), processExcelAndScrapeLinkedIn);
+
+// ─── Advanced Google Scraper routes ──────────────────────────────────────────
+app.use("/advanced-google", advancedGoogleRouter);
 
 // ─── JSON to CSV converter routes ────────────────────────────────────────────
 const csvUpload = multer({ dest: "uploads/", limits: { fileSize: 100 * 1024 * 1024 } }); // 100MB

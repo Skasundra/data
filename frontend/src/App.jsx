@@ -11,6 +11,7 @@ import MapRadiusSearch from './components/MapRadiusSearch';
 import IdbfScraper from './components/IdbfScraper';
 import GoogleMapsScraper from './components/GoogleMapsScraper';
 import JsonToCsvConverter from './components/JsonToCsvConverter';
+import AdvancedGoogleScraper from './components/AdvancedGoogleScraper';
 import MainLayout from './layouts/MainLayout';
 import { scraperConfigs } from './config/scrapers';
 
@@ -54,6 +55,8 @@ function App() {
             <IdbfScraper />
           ) : selectedScraper.id === 'google-maps' ? (
             <GoogleMapsScraper />
+          ) : selectedScraper.id === 'advanced-google-scrape' ? (
+            <AdvancedGoogleScraper />
           ) : selectedScraper.id === 'json-to-csv' ? (
             <JsonToCsvConverter />
           ) : (

@@ -496,8 +496,8 @@ const MapRadiusSearch = () => {
       )}
 
       <TextField fullWidth type="number" label="Max Results" value={maxResults}
-        onChange={(e) => setMaxResults(Math.max(1, Math.min(100, parseInt(e.target.value) || 20)))}
-        slotProps={{ input: { inputProps: { min: 1, max: 100 } } }} helperText="Maximum: 100 results" />
+        onChange={(e) => setMaxResults(Math.max(1, Math.min(300, parseInt(e.target.value) || 20)))}
+        slotProps={{ input: { inputProps: { min: 1, max: 300 } } }} helperText="Maximum: 300 results (larger radius + grid search finds more)" />
 
       <Box>
         <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>Radius: {(radius / 1000).toFixed(1)} km</Typography>

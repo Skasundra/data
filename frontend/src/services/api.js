@@ -104,4 +104,50 @@ export const convertJsonToCsv = async (data) => {
   }
 };
 
+// ─── Advanced Google Scraper API Calls ────────────────────────────────────────
+export const createAdvancedGoogleJob = async (data) => {
+  try {
+    const response = await api.post('/advanced-google/jobs', data);
+    return response.data;
+  } catch (error) {
+    normaliseError(error);
+  }
+};
+
+export const fetchAdvancedGoogleJobs = async () => {
+  try {
+    const response = await api.get('/advanced-google/jobs');
+    return response.data;
+  } catch (error) {
+    normaliseError(error);
+  }
+};
+
+export const fetchAdvancedGoogleJobStatus = async (jobId) => {
+  try {
+    const response = await api.get(`/advanced-google/jobs/${jobId}`);
+    return response.data;
+  } catch (error) {
+    normaliseError(error);
+  }
+};
+
+export const fetchAdvancedGoogleJobResults = async (jobId) => {
+  try {
+    const response = await api.get(`/advanced-google/jobs/${jobId}/results`);
+    return response.data;
+  } catch (error) {
+    normaliseError(error);
+  }
+};
+
+export const deleteAdvancedGoogleJob = async (jobId) => {
+  try {
+    const response = await api.delete(`/advanced-google/jobs/${jobId}`);
+    return response.data;
+  } catch (error) {
+    normaliseError(error);
+  }
+};
+
 export default api;

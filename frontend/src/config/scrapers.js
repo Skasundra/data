@@ -197,6 +197,15 @@ export const scraperConfigs = [
     fields: []
   },
   {
+    id: 'advanced-google-scrape',
+    name: 'Advanced Google Scraper',
+    endpoint: '/advanced-google/jobs',
+    icon: 'AutoAwesomeMotion',
+    type: 'advanced-google-scraper',
+    description: 'Bulk Google Maps business scraper supporting multiple queries, custom locations, and parallel execution',
+    fields: []
+  },
+  {
     id: 'json-to-csv',
     name: 'JSON to CSV',
     endpoint: '',
