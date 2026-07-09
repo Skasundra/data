@@ -1,4 +1,4 @@
-// frontend/src/components/mapRadius/utils.js
+// frontend/src/modules/map-radius-search/utils.js
 // Run: npm install @googlemaps/markerclusterer xlsx
 
 import { HISTORY_KEY, MAX_HISTORY } from './constants';

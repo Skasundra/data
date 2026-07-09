@@ -28,7 +28,7 @@ import {
   Business,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
-import api from '../services/api';
+import api from '../../services/api';
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -167,25 +167,25 @@ const LinkedInScraper = () => {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Paper elevation={0} sx={{ p: 4, border: '1px solid #e5e5e5', borderRadius: 3 }}>
+    <Box sx={{ p: 1 }}>
+      <Paper elevation={0} sx={{ p: 4, border: '1px solid #e2e8f0', borderRadius: '12px' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
           <LinkedIn sx={{ fontSize: 40, color: '#0077b5', mr: 2 }} />
           <Box>
-            <Typography variant="h4" component="h1" gutterBottom>
+            <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5, color: '#0f172a' }}>
               LinkedIn Company Website Scraper
             </Typography>
-            <Typography variant="body1" color="text.secondary">
+            <Typography variant="body2" color="text.secondary">
               Upload a CSV or Excel file with LinkedIn company profile URLs to extract their website URLs
             </Typography>
           </Box>
         </Box>
 
-        <Divider sx={{ mb: 3 }} />
+        <Divider sx={{ mb: 3, borderColor: '#e2e8f0' }} />
 
         {/* File Upload Section */}
         <Box sx={{ mb: 4 }}>
-          <Typography variant="h6" gutterBottom>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#0f172a', mb: 1 }}>
             Step 1: Upload Your File
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -198,7 +198,6 @@ const LinkedInScraper = () => {
               variant="contained"
               startIcon={<CloudUpload />}
               disabled={loading}
-              sx={{ bgcolor: '#111111', '&:hover': { bgcolor: '#333333' } }}
             >
               Choose File
               <VisuallyHiddenInput
@@ -213,12 +212,13 @@ const LinkedInScraper = () => {
                 label={`${selectedFile.name} (${(selectedFile.size / 1024).toFixed(1)} KB)`}
                 color="primary"
                 variant="outlined"
+                sx={{ borderRadius: '16px' }}
               />
             )}
           </Box>
 
-          <Alert severity="info" sx={{ mb: 2 }}>
-            <Typography variant="body2">
+          <Alert severity="info" sx={{ mb: 2, borderRadius: '8px', border: '1px solid #bfdbfe' }}>
+            <Typography variant="body2" sx={{ lineHeight: 1.5 }}>
               <strong>File Requirements:</strong>
               <br />• Supported formats: CSV, Excel (.xlsx, .xls)
               <br />• Maximum file size: 10MB
@@ -230,17 +230,17 @@ const LinkedInScraper = () => {
 
         {/* Action Button */}
         <Box sx={{ mb: 4 }}>
-          <Typography variant="h6" gutterBottom>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#0f172a', mb: 1 }}>
             Step 2: Start Scraping
           </Typography>
-          <Button
-            variant="contained"
-            size="large"
-            onClick={handleUploadAndScrape}
-            disabled={!selectedFile || loading}
-            startIcon={loading ? <CircularProgress size={20} /> : <Business />}
-            sx={{ minWidth: 200, bgcolor: '#111111', '&:hover': { bgcolor: '#333333' } }}
-          >
+            <Button
+              variant="contained"
+              size="large"
+              onClick={handleUploadAndScrape}
+              disabled={!selectedFile || loading}
+              startIcon={loading ? <CircularProgress size={18} color="inherit" /> : <Business />}
+              sx={{ minWidth: 200 }}
+            >
             {loading ? 'Processing...' : 'Extract Websites'}
           </Button>
         </Box>
@@ -248,23 +248,21 @@ const LinkedInScraper = () => {
         {/* Progress Bar */}
         {loading && (
           <Box sx={{ mb: 4 }}>
-            <Typography variant="body2" gutterBottom>
+            <Typography variant="body2" color="text.secondary" gutterBottom>
               Scraping LinkedIn pages... This may take several minutes.
             </Typography>
-            <LinearProgress />
+            <LinearProgress sx={{ borderRadius: '4px', height: 6 }} />
           </Box>
         )}
 
-        {/* Error Alert */}
         {error && (
-          <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError('')}>
+          <Alert severity="error" sx={{ mb: 3, borderRadius: '8px', border: '1px solid #fecaca' }} onClose={() => setError('')}>
             {error}
           </Alert>
         )}
 
-        {/* Success Alert */}
         {success && (
-          <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccess('')}>
+          <Alert severity="success" sx={{ mb: 3, borderRadius: '8px', border: '1px solid #bbf7d0' }} onClose={() => setSuccess('')}>
             {success}
           </Alert>
         )}
@@ -272,54 +270,54 @@ const LinkedInScraper = () => {
         {/* Results Section */}
         {metadata && (
           <Box sx={{ mb: 4 }}>
-            <Typography variant="h6" gutterBottom>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#0f172a', mb: 2 }}>
               Scraping Results
             </Typography>
             
             <Grid container spacing={2} sx={{ mb: 3 }}>
               <Grid item xs={12} sm={6} md={3}>
-                <Card>
+                <Card variant="outlined" sx={{ borderRadius: '12px', border: '1px solid #e2e8f0' }}>
                   <CardContent>
-                    <Typography color="text.secondary" gutterBottom>
-                      Total URLs
+                    <Typography color="text.secondary" variant="caption" sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}>
+                      TOTAL URLS
                     </Typography>
-                    <Typography variant="h4">
+                    <Typography variant="h4" sx={{ fontWeight: 800, color: '#0f172a' }}>
                       {metadata.processedUrls}
                     </Typography>
                   </CardContent>
                 </Card>
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
-                <Card>
+                <Card variant="outlined" sx={{ borderRadius: '12px', border: '1px solid #bbf7d0', bgcolor: '#f0fdf4' }}>
                   <CardContent>
-                    <Typography color="text.secondary" gutterBottom>
-                      Websites Found
+                    <Typography color="success.main" variant="caption" sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}>
+                      WEBSITES FOUND
                     </Typography>
-                    <Typography variant="h4" color="success.main">
+                    <Typography variant="h4" sx={{ fontWeight: 800, color: '#16a34a' }}>
                       {metadata.websitesFound}
                     </Typography>
                   </CardContent>
                 </Card>
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
-                <Card>
+                <Card variant="outlined" sx={{ borderRadius: '12px', border: '1px solid #bfdbfe', bgcolor: '#eff6ff' }}>
                   <CardContent>
-                    <Typography color="text.secondary" gutterBottom>
-                      Success Rate
+                    <Typography color="primary.main" variant="caption" sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}>
+                      SUCCESS RATE
                     </Typography>
-                    <Typography variant="h4" color="primary.main">
+                    <Typography variant="h4" sx={{ fontWeight: 800, color: '#2563eb' }}>
                       {Math.round((metadata.successfulScrapes / metadata.processedUrls) * 100)}%
                     </Typography>
                   </CardContent>
                 </Card>
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
-                <Card>
+                <Card variant="outlined" sx={{ borderRadius: '12px', border: '1px solid #e2e8f0' }}>
                   <CardContent>
-                    <Typography color="text.secondary" gutterBottom>
-                      Execution Time
+                    <Typography color="text.secondary" variant="caption" sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}>
+                      EXECUTION TIME
                     </Typography>
-                    <Typography variant="h4">
+                    <Typography variant="h4" sx={{ fontWeight: 800, color: '#0f172a' }}>
                       {metadata.executionTimeSeconds}s
                     </Typography>
                   </CardContent>
@@ -328,7 +326,7 @@ const LinkedInScraper = () => {
             </Grid>
 
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#0f172a' }}>
                 Extracted Data ({results.length} records)
               </Typography>
               <Button
@@ -336,7 +334,6 @@ const LinkedInScraper = () => {
                 startIcon={<FileDownload />}
                 onClick={downloadCSV}
                 disabled={results.length === 0}
-                sx={{ bgcolor: '#111111', '&:hover': { bgcolor: '#333333' } }}
               >
                 Download CSV
               </Button>
@@ -346,10 +343,10 @@ const LinkedInScraper = () => {
 
         {/* Results List */}
         {results.length > 0 && (
-          <Paper variant="outlined" sx={{ maxHeight: 600, overflow: 'auto', border: '1px solid #e5e5e5' }}>
+          <Paper variant="outlined" sx={{ maxHeight: 600, overflow: 'auto', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
             <List>
               {results.map((result, index) => (
-                <ListItem key={index} divider>
+                <ListItem key={index} divider sx={{ borderColor: '#f1f5f9' }}>
                   <ListItemIcon>
                     {result.success ? (
                       result.website ? (
@@ -364,7 +361,7 @@ const LinkedInScraper = () => {
                   <ListItemText
                     primary={
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                        <Typography variant="subtitle1" component="span">
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#0f172a' }}>
                           {result.companyName || 'Unknown Company'}
                         </Typography>
                         <Chip
@@ -372,12 +369,14 @@ const LinkedInScraper = () => {
                           label={getStatusText(result.success, result.website, result.error)}
                           color={getStatusColor(result.success, result.website)}
                           variant="outlined"
+                          sx={{ borderRadius: '16px', fontSize: '0.7rem', fontWeight: 600 }}
                         />
                         {result.rowIndex && (
                           <Chip
                             size="small"
                             label={`Row ${result.rowIndex}`}
                             variant="outlined"
+                            sx={{ borderRadius: '16px', fontSize: '0.7rem' }}
                           />
                         )}
                       </Box>
@@ -385,15 +384,15 @@ const LinkedInScraper = () => {
                     secondary={
                       <Box sx={{ mt: 1 }}>
                         <Typography variant="body2" color="text.secondary" gutterBottom>
-                          <LinkedIn sx={{ fontSize: 16, mr: 1, verticalAlign: 'middle' }} />
-                          <a href={result.linkedinUrl} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                          <LinkedIn sx={{ fontSize: 16, mr: 1, verticalAlign: 'middle', color: '#0077b5' }} />
+                          <a href={result.linkedinUrl} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: '#2563eb' }}>
                             {result.linkedinUrl}
                           </a>
                         </Typography>
                         {result.website && (
                           <Typography variant="body2" color="primary.main">
-                            <Language sx={{ fontSize: 16, mr: 1, verticalAlign: 'middle' }} />
-                            <a href={result.website} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                            <Language sx={{ fontSize: 16, mr: 1, verticalAlign: 'middle', color: '#64748b' }} />
+                            <a href={result.website} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: '#16a34a', fontWeight: 500 }}>
                               {result.website}
                             </a>
                           </Typography>
@@ -425,33 +424,33 @@ const LinkedInScraper = () => {
         {/* Instructions */}
         {results.length === 0 && !loading && (
           <Box sx={{ mt: 4 }}>
-            <Typography variant="h6" gutterBottom>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#0f172a', mb: 1 }}>
               How to Use:
             </Typography>
             <List>
-              <ListItem>
-                <ListItemIcon>
-                  <Typography variant="h6" color="primary">1</Typography>
+              <ListItem sx={{ py: 0.5 }}>
+                <ListItemIcon sx={{ minWidth: 28 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0f172a' }}>1</Typography>
                 </ListItemIcon>
-                <ListItemText primary="Prepare a CSV or Excel file with LinkedIn company profile URLs" />
+                <ListItemText primary="Prepare a CSV or Excel file with LinkedIn company profile URLs" primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }} />
               </ListItem>
-              <ListItem>
-                <ListItemIcon>
-                  <Typography variant="h6" color="primary">2</Typography>
+              <ListItem sx={{ py: 0.5 }}>
+                <ListItemIcon sx={{ minWidth: 28 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0f172a' }}>2</Typography>
                 </ListItemIcon>
-                <ListItemText primary="Upload the file using the 'Choose File' button" />
+                <ListItemText primary="Upload the file using the 'Choose File' button" primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }} />
               </ListItem>
-              <ListItem>
-                <ListItemIcon>
-                  <Typography variant="h6" color="primary">3</Typography>
+              <ListItem sx={{ py: 0.5 }}>
+                <ListItemIcon sx={{ minWidth: 28 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0f172a' }}>3</Typography>
                 </ListItemIcon>
-                <ListItemText primary="Click 'Extract Websites' to start scraping" />
+                <ListItemText primary="Click 'Extract Websites' to start scraping" primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }} />
               </ListItem>
-              <ListItem>
-                <ListItemIcon>
-                  <Typography variant="h6" color="primary">4</Typography>
+              <ListItem sx={{ py: 0.5 }}>
+                <ListItemIcon sx={{ minWidth: 28 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0f172a' }}>4</Typography>
                 </ListItemIcon>
-                <ListItemText primary="Download the results as CSV when complete" />
+                <ListItemText primary="Download the results as CSV when complete" primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }} />
               </ListItem>
             </List>
           </Box>

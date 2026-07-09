@@ -1,5 +1,6 @@
-import { Box, Container, Toolbar } from '@mui/material';
+import { Box, Toolbar } from '@mui/material';
 import PropTypes from 'prop-types';
+import { SIDEBAR_WIDTH } from './Sidebar';
 
 const MainLayout = ({ children }) => {
   return (
@@ -7,17 +8,15 @@ const MainLayout = ({ children }) => {
       component="main"
       sx={{
         flexGrow: 1,
-        p: 3,
-        width: { sm: `calc(100% - 280px)` },
+        width: { sm: `calc(100% - ${SIDEBAR_WIDTH}px)` },
         minHeight: '100vh',
-        position: 'relative',
-        zIndex: 1,
+        bgcolor: '#f9fafb',
       }}
     >
-      <Toolbar />
-      <Container maxWidth={false} sx={{ mt: 2, px: { xs: 2, md: 3 } }}>
+      <Toolbar sx={{ minHeight: { xs: 56, sm: 60 } }} />
+      <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 1400, mx: 'auto' }}>
         {children}
-      </Container>
+      </Box>
     </Box>
   );
 };

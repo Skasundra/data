@@ -1,5 +1,4 @@
-// frontend/src/components/MapRadiusSearch.jsx
-// Run in frontend/: npm install @googlemaps/markerclusterer xlsx
+// frontend/src/modules/map-radius-search/MapRadiusSearch.jsx
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   Box, Paper, TextField, Button, Typography, CircularProgress,
@@ -27,21 +26,21 @@ import CircleOutlinedIcon from '@mui/icons-material/CircleOutlined';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckBoxIcon    from '@mui/icons-material/CheckBox';
 import UndoIcon        from '@mui/icons-material/Undo';
-import { searchByRadius } from '../services/api';
+import { searchByRadius } from '../../services/api';
 import {
   loadGoogleMapsScript, loadHistory, saveHistory,
   loadContactStatus, saveContactStatus,
   exportCSV, exportXLSX, sortResults, filterResults, hasValue,
   encodeSearchParams, decodeSearchParams,
-} from './mapRadius/utils';
+} from './utils';
 import {
   DEFAULT_CENTER, KEYWORD_SUGGESTIONS, SORT_OPTIONS,
   CONTACT_STATUS_CONFIG, MAP_STYLES, PROGRESS_MESSAGES,
-} from './mapRadius/constants';
-import DetailModal      from './mapRadius/DetailModal';
-import ResultCard       from './mapRadius/ResultCard';
-import FilterPanel      from './mapRadius/FilterPanel';
-import SavedCollections from './mapRadius/SavedCollections';
+} from './constants';
+import DetailModal      from './DetailModal';
+import ResultCard       from './ResultCard';
+import FilterPanel      from './FilterPanel';
+import SavedCollections from './SavedCollections';
 
 // ─── Animated count hook ──────────────────────────────────────────────────────
 const useCountUp = (target, duration = 800) => {
@@ -63,8 +62,8 @@ const useCountUp = (target, duration = 800) => {
 // ─── Empty state ──────────────────────────────────────────────────────────────
 const EmptyState = ({ searched }) => (
   <Box sx={{ textAlign: 'center', py: 4, px: 2 }}>
-    <BusinessIcon sx={{ fontSize: 48, color: '#d1d5db', mb: 1.5 }} />
-    <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+    <BusinessIcon sx={{ fontSize: 48, color: '#cbd5e1', mb: 1.5 }} />
+    <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5, color: '#0f172a' }}>
       {searched ? 'No results found' : 'Ready to search'}
     </Typography>
     <Typography variant="caption" color="text.secondary">
@@ -171,8 +170,8 @@ const MapRadiusSearch = () => {
 
     const circle = new window.google.maps.Circle({
       map, center, radius,
-      fillColor: '#111111', fillOpacity: 0.12,
-      strokeColor: '#111111', strokeOpacity: 0.6, strokeWeight: 2,
+      fillColor: '#0f172a', fillOpacity: 0.12,
+      strokeColor: '#0f172a', strokeOpacity: 0.6, strokeWeight: 2,
       editable: true, draggable: true,
     });
     circleRef.current = circle;
@@ -203,7 +202,7 @@ const MapRadiusSearch = () => {
         const dm = new window.google.maps.drawing.DrawingManager({
           drawingMode: window.google.maps.drawing.OverlayType.POLYGON,
           drawingControl: false,
-          polygonOptions: { fillColor: '#111111', fillOpacity: 0.12, strokeColor: '#111111', strokeOpacity: 0.6, strokeWeight: 2, editable: true },
+          polygonOptions: { fillColor: '#0f172a', fillOpacity: 0.12, strokeColor: '#0f172a', strokeOpacity: 0.6, strokeWeight: 2, editable: true },
         });
         dm.setMap(googleMapRef.current);
         dm.addListener('polygoncomplete', (polygon) => {
@@ -245,7 +244,7 @@ const MapRadiusSearch = () => {
         title: loc.storeName,
         label: { text: String(idx + 1), color: '#fff', fontSize: '11px', fontWeight: '700' },
         animation: window.google.maps.Animation.DROP,
-        icon: { path: window.google.maps.SymbolPath.CIRCLE, scale: 14, fillColor: '#111111', fillOpacity: 1, strokeColor: '#ffffff', strokeWeight: 2 },
+        icon: { path: window.google.maps.SymbolPath.CIRCLE, scale: 14, fillColor: '#0f172a', fillOpacity: 1, strokeColor: '#ffffff', strokeWeight: 2 },
       });
       marker.addListener('click', () => { setSelectedId(loc.businessId); setModalIndex(idx); if (isMobile) setMobileTab(2); });
       markerMapRef.current[loc.businessId] = marker;
@@ -253,7 +252,7 @@ const MapRadiusSearch = () => {
       return marker;
     });
     markersRef.current = newMarkers;
-    // Marker clustering — graceful degrade if package not installed
+    // Marker clustering
     import('@googlemaps/markerclusterer').then(({ MarkerClusterer }) => {
       clusterRef.current = new MarkerClusterer({ map: googleMapRef.current, markers: newMarkers });
     }).catch(() => {});
@@ -289,11 +288,11 @@ const MapRadiusSearch = () => {
   // ── Hover highlight ────────────────────────────────────────────────────────
   const handleCardHover = useCallback((loc) => {
     const m = markerMapRef.current[loc.businessId];
-    if (m) { m.setIcon({ path: window.google.maps.SymbolPath.CIRCLE, scale: 16, fillColor: '#333333', fillOpacity: 1, strokeColor: '#ffffff', strokeWeight: 3 }); m.setZIndex(999); }
+    if (m) { m.setIcon({ path: window.google.maps.SymbolPath.CIRCLE, scale: 16, fillColor: '#334155', fillOpacity: 1, strokeColor: '#ffffff', strokeWeight: 3 }); m.setZIndex(999); }
   }, []);
   const handleCardLeave = useCallback(() => {
     Object.values(markerMapRef.current).forEach((m) => {
-      m.setIcon({ path: window.google.maps.SymbolPath.CIRCLE, scale: 14, fillColor: '#111111', fillOpacity: 1, strokeColor: '#ffffff', strokeWeight: 2 });
+      m.setIcon({ path: window.google.maps.SymbolPath.CIRCLE, scale: 14, fillColor: '#0f172a', fillOpacity: 1, strokeColor: '#ffffff', strokeWeight: 2 });
       m.setZIndex(undefined);
     });
   }, []);
@@ -362,7 +361,7 @@ const MapRadiusSearch = () => {
     undoTimeout.current = setTimeout(() => setUndoData(null), 5000);
     showToast('Results cleared', 'info',
       <Button size="small" startIcon={<UndoIcon />} onClick={handleUndo}
-        sx={{ color: '#111111', textTransform: 'none', fontSize: '0.75rem' }}>Undo</Button>
+        sx={{ color: '#0f172a', borderRadius: '8px', textTransform: 'none', fontSize: '0.75rem' }}>Undo</Button>
     );
     setResults([]); setSelectedId(null); setModalIndex(null);
     clearMarkers(); setHasSearched(false); setSelectedIds(new Set());
@@ -400,10 +399,10 @@ const MapRadiusSearch = () => {
   };
 
   // ── Guards ─────────────────────────────────────────────────────────────────
-  if (mapError) return <Box sx={{ p: 4 }}><Alert severity="error">{mapError}</Alert></Box>;
+  if (mapError) return <Box sx={{ p: 4 }}><Alert severity="error" sx={{ borderRadius: '8px' }}>{mapError}</Alert></Box>;
   if (!mapLoaded) return (
     <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '80vh', gap: 2 }}>
-      <CircularProgress sx={{ color: '#111111' }} />
+      <CircularProgress sx={{ color: '#0f172a' }} />
       <Typography variant="body2" color="text.secondary">Loading map…</Typography>
     </Box>
   );
@@ -412,29 +411,29 @@ const MapRadiusSearch = () => {
   const ControlsPanel = (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 44, height: 44, borderRadius: 2,
-          background: '#111111', color: '#ffffff' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 44, height: 44, borderRadius: '8px',
+          background: 'linear-gradient(135deg, #0f172a 0%, #334155 100%)', color: '#ffffff', boxShadow: '0 4px 10px rgba(15,23,42,0.15)' }}>
           <MapIcon />
         </Box>
         <Box>
-          <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }}>Radius Search</Typography>
+          <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2, color: '#0f172a' }}>Radius Search</Typography>
           <Typography variant="caption" color="text.secondary">Position circle, enter keyword, search</Typography>
         </Box>
       </Box>
 
       {/* Multi-keyword chips */}
-      <Box>
-        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.8 }}>Keywords</Typography>
-        <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 0.8, mb: 1 }}>
+      <Box sx={{ mt: 1 }}>
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.8, fontWeight: 600 }}>Keywords</Typography>
+        <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 0.8, mb: 1.5 }}>
           {keywords.map((kw, i) => (
             <Chip key={i} label={kw || '(empty)'} size="small"
               onDelete={keywords.length > 1 ? () => setKeywords((p) => p.filter((_, j) => j !== i)) : undefined}
-              sx={{ bgcolor: kw ? '#f0f0f0' : '#fafafa',
-                color: kw ? '#111111' : 'text.secondary', border: '1px solid #e5e5e5' }} />
+              sx={{ bgcolor: kw ? '#f1f5f9' : '#f8fafc', borderRadius: '16px',
+                color: kw ? '#0f172a' : 'text.secondary', border: '1px solid #e2e8f0', fontSize: '0.75rem', fontWeight: 500 }} />
           ))}
           <Tooltip title="Add keyword">
             <IconButton size="small" onClick={() => setKeywords((p) => [...p, ''])}
-              sx={{ color: '#111111', bgcolor: '#f5f5f5', p: 0.4 }}>
+              sx={{ color: '#0f172a', bgcolor: '#f1f5f9', p: 0.5, borderRadius: '8px', '&:hover': { bgcolor: '#e2e8f0' } }}>
               <AddIcon sx={{ fontSize: 14 }} />
             </IconButton>
           </Tooltip>
@@ -450,21 +449,22 @@ const MapRadiusSearch = () => {
               if (e.key === 'Escape') setShowSuggestions(false);
               if (e.key === ',' && keywords[keywords.length - 1].trim()) { e.preventDefault(); setKeywords((p) => [...p, '']); }
             }}
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
             slotProps={{ input: { endAdornment: keywords[keywords.length - 1] && (
-              <IconButton size="small" onClick={() => setKeywords((p) => { const n = [...p]; n[n.length - 1] = ''; return n; })}>
+              <IconButton size="small" onClick={() => setKeywords((p) => { const n = [...p]; n[n.length - 1] = ''; return n; })} sx={{ borderRadius: '8px' }}>
                 <ClearIcon fontSize="small" />
               </IconButton>
             )}}}
           />
           {showSuggestions && (
             <Paper sx={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10,
-              bgcolor: '#ffffff', border: '1px solid #e5e5e5',
-              borderRadius: 2, mt: 0.5, maxHeight: 200, overflowY: 'auto' }}>
+              bgcolor: '#ffffff', border: '1px solid #e2e8f0',
+              borderRadius: '8px', mt: 0.5, maxHeight: 200, overflowY: 'auto', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05)' }}>
               {KEYWORD_SUGGESTIONS
                 .filter((s) => !keywords[keywords.length - 1] || s.toLowerCase().includes(keywords[keywords.length - 1].toLowerCase()))
                 .map((s) => (
                   <Box key={s} onMouseDown={() => { setKeywords((p) => { const n = [...p]; n[n.length - 1] = s; return n; }); setShowSuggestions(false); }}
-                    sx={{ px: 2, py: 1, cursor: 'pointer', fontSize: '0.875rem', '&:hover': { bgcolor: '#f5f5f5' } }}>
+                    sx={{ px: 2, py: 1, cursor: 'pointer', fontSize: '0.875rem', '&:hover': { bgcolor: '#f1f5f9' } }}>
                     {s}
                   </Box>
                 ))}
@@ -477,16 +477,16 @@ const MapRadiusSearch = () => {
       {history.length > 0 && (
         <Box>
           <Button size="small" startIcon={<HistoryIcon />} onClick={() => setShowHistory((v) => !v)}
-            sx={{ color: 'text.secondary', textTransform: 'none', p: 0, minWidth: 0, '&:hover': { color: '#111111', bgcolor: 'transparent' } }}>
+            sx={{ borderRadius: '8px', color: 'text.secondary', textTransform: 'none', p: 0.5, minWidth: 0, '&:hover': { color: '#0f172a', bgcolor: 'transparent' } }}>
             Recent searches
           </Button>
           {showHistory && (
-            <Box sx={{ mt: 1, p: 1.5, borderRadius: 2, bgcolor: '#fafafa', border: '1px solid #e5e5e5' }}>
+            <Box sx={{ mt: 1, p: 1.5, borderRadius: '8px', bgcolor: '#f8fafc', border: '1px solid #e2e8f0' }}>
               {history.map((h, i) => (
                 <Box key={i} onClick={() => handleHistorySelect(h)}
-                  sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.8, px: 1, borderRadius: 1, cursor: 'pointer', '&:hover': { bgcolor: '#f0f0f0' } }}>
+                  sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.8, px: 1, borderRadius: '6px', cursor: 'pointer', '&:hover': { bgcolor: '#f1f5f9' } }}>
                   <HistoryIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
-                  <Typography variant="body2" sx={{ flex: 1 }}>{h.keyword}</Typography>
+                  <Typography variant="body2" sx={{ flex: 1, color: '#0f172a' }}>{h.keyword}</Typography>
                   <Typography variant="caption" color="text.secondary">{(h.radius / 1000).toFixed(0)} km</Typography>
                 </Box>
               ))}
@@ -496,22 +496,23 @@ const MapRadiusSearch = () => {
       )}
 
       <TextField fullWidth type="number" label="Max Results" value={maxResults}
+        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
         onChange={(e) => setMaxResults(Math.max(1, Math.min(300, parseInt(e.target.value) || 20)))}
         slotProps={{ input: { inputProps: { min: 1, max: 300 } } }} helperText="Maximum: 300 results (larger radius + grid search finds more)" />
 
       <Box>
-        <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>Radius: {(radius / 1000).toFixed(1)} km</Typography>
+        <Typography variant="body2" sx={{ mb: 1, fontWeight: 600, color: '#0f172a' }}>Radius: {(radius / 1000).toFixed(1)} km</Typography>
         <Slider value={radius} onChange={(_, v) => setRadius(v)} min={500} max={50000} step={500}
           marks={[{ value: 500, label: '0.5km' }, { value: 25000, label: '25km' }, { value: 50000, label: '50km' }]}
-          sx={{ color: '#111111', '& .MuiSlider-thumb': { backgroundColor: '#111111' } }} />
+          sx={{ color: '#0f172a', '& .MuiSlider-thumb': { backgroundColor: '#0f172a' } }} />
       </Box>
 
-      <Card sx={{ background: '#fafafa', border: '1px solid #e5e5e5' }}>
+      <Card variant="outlined" sx={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
         <CardContent sx={{ pb: '12px !important', pt: '12px !important' }}>
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.8 }}>Search Parameters</Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.8, fontWeight: 600 }}>Search Parameters</Typography>
           {[`Lat: ${center.lat.toFixed(6)}`, `Lng: ${center.lng.toFixed(6)}`,
             `Radius: ${(radius / 1000).toFixed(1)} km`, `Max: ${maxResults} results`].map((l) => (
-            <Typography key={l} variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.72rem' }}>{l}</Typography>
+            <Typography key={l} variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.72rem', color: '#475569' }}>{l}</Typography>
           ))}
         </CardContent>
       </Card>
@@ -521,24 +522,24 @@ const MapRadiusSearch = () => {
         <Tooltip title={mapMode === 'markers' ? 'Switch to Heatmap' : 'Switch to Markers'}>
           <Button size="small" variant="outlined" startIcon={<LayersIcon />}
             onClick={() => setMapMode((m) => m === 'markers' ? 'heatmap' : 'markers')}
-            sx={{ textTransform: 'none', fontSize: '0.75rem', flex: 1,
-              borderColor: mapMode === 'heatmap' ? '#111111' : '#e5e5e5',
-              color: mapMode === 'heatmap' ? '#111111' : 'text.secondary' }}>
+            sx={{ borderRadius: '8px', textTransform: 'none', fontSize: '0.75rem', flex: 1,
+              borderColor: mapMode === 'heatmap' ? '#0f172a' : '#e2e8f0',
+              color: mapMode === 'heatmap' ? '#0f172a' : 'text.secondary' }}>
             {mapMode === 'markers' ? 'Markers' : 'Heatmap'}
           </Button>
         </Tooltip>
         <Tooltip title={drawMode === 'circle' ? 'Switch to Polygon' : 'Switch to Circle'}>
           <Button size="small" variant="outlined" startIcon={drawMode === 'circle' ? <CircleOutlinedIcon /> : <HexagonIcon />}
             onClick={() => setDrawMode((m) => m === 'circle' ? 'polygon' : 'circle')}
-            sx={{ textTransform: 'none', fontSize: '0.75rem', flex: 1,
-              borderColor: drawMode === 'polygon' ? '#111111' : '#e5e5e5',
-              color: drawMode === 'polygon' ? '#111111' : 'text.secondary' }}>
+            sx={{ borderRadius: '8px', textTransform: 'none', fontSize: '0.75rem', flex: 1,
+              borderColor: drawMode === 'polygon' ? '#0f172a' : '#e2e8f0',
+              color: drawMode === 'polygon' ? '#0f172a' : 'text.secondary' }}>
             {drawMode === 'circle' ? 'Circle' : 'Polygon'}
           </Button>
         </Tooltip>
         <Tooltip title={mapStyleMode === 'dark' ? 'Light map' : 'Dark map'}>
           <IconButton size="small" onClick={() => setMapStyleMode((m) => m === 'dark' ? 'light' : 'dark')}
-            sx={{ color: '#111111', bgcolor: '#f5f5f5', borderRadius: 1.5 }}>
+            sx={{ color: '#0f172a', bgcolor: '#f1f5f9', borderRadius: '8px', '&:hover': { bgcolor: '#e2e8f0' } }}>
             {mapStyleMode === 'dark' ? <WbSunnyIcon sx={{ fontSize: 18 }} /> : <NightlightIcon sx={{ fontSize: 18 }} />}
           </IconButton>
         </Tooltip>
@@ -548,7 +549,7 @@ const MapRadiusSearch = () => {
 
       <Button size="small" variant="outlined" startIcon={<BookmarkIcon />}
         onClick={() => setShowCollections((v) => !v)}
-        sx={{ textTransform: 'none', fontSize: '0.75rem', borderColor: '#e5e5e5', color: 'text.secondary' }}>
+        sx={{ borderRadius: '8px', textTransform: 'none', fontSize: '0.75rem', borderColor: '#e2e8f0', color: 'text.secondary' }}>
         Saved Collections
       </Button>
       {showCollections && (
@@ -562,18 +563,18 @@ const MapRadiusSearch = () => {
         <Button fullWidth variant="contained"
           startIcon={loading ? <CircularProgress size={18} color="inherit" /> : <SearchIcon />}
           onClick={handleSearch} disabled={loading || !keywords.some((k) => k.trim())}
-          sx={{ background: '#111111', fontWeight: 600, color: '#ffffff', '&:hover': { background: '#333333' } }}>
+          sx={{ borderRadius: '8px', background: '#0f172a', fontWeight: 600, color: '#ffffff', '&:hover': { background: '#1e293b' } }}>
           {loading ? 'Searching…' : 'Search'}
         </Button>
         <Tooltip title="Use my current location"><span>
           <IconButton onClick={handleGetCurrentLocation} aria-label="Use current location"
-            sx={{ background: '#f5f5f5', '&:hover': { background: '#e5e5e5' } }}>
+            sx={{ borderRadius: '8px', background: '#f1f5f9', '&:hover': { background: '#e2e8f0' } }}>
             <MyLocationIcon />
           </IconButton>
         </span></Tooltip>
         <Tooltip title="Share search URL"><span>
           <IconButton onClick={handleShareUrl} aria-label="Share search URL"
-            sx={{ background: '#f5f5f5', '&:hover': { background: '#e5e5e5' } }}>
+            sx={{ borderRadius: '8px', background: '#f1f5f9', '&:hover': { background: '#e2e8f0' } }}>
             <ShareIcon />
           </IconButton>
         </span></Tooltip>
@@ -582,7 +583,7 @@ const MapRadiusSearch = () => {
       {loading && (
         <Fade in>
           <Box>
-            <LinearProgress sx={{ borderRadius: 1, bgcolor: '#f0f0f0', '& .MuiLinearProgress-bar': { bgcolor: '#111111' } }} />
+            <LinearProgress sx={{ borderRadius: '4px', bgcolor: '#f1f5f9', '& .MuiLinearProgress-bar': { bgcolor: '#0f172a' } }} />
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.8, textAlign: 'center' }}>{progressMsg}</Typography>
           </Box>
         </Fade>
@@ -590,7 +591,7 @@ const MapRadiusSearch = () => {
 
       {results.length > 0 && (
         <Button fullWidth variant="outlined" onClick={handleClear}
-          sx={{ borderColor: '#fecaca', color: '#ef4444' }}>
+          sx={{ borderRadius: '8px', borderColor: '#fecaca', color: '#ef4444', '&:hover': { bgcolor: '#fdf2f2', borderColor: '#ef4444' } }}>
           Clear Results
         </Button>
       )}
@@ -603,36 +604,36 @@ const MapRadiusSearch = () => {
       {results.length > 0 ? (
         <>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0f172a' }}>
               {countDisplay} result{sortedFiltered.length !== 1 ? 's' : ''}
               {activeFilterCount > 0 && <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 0.5 }}>(filtered)</Typography>}
             </Typography>
             {filters.hasPhone && <Chip label="Has Phone" size="small" onDelete={() => setFilters((f) => ({ ...f, hasPhone: false }))}
-              sx={{ height: 20, fontSize: '0.65rem', bgcolor: '#f0f0f0', color: '#111111' }} />}
+              sx={{ height: 20, fontSize: '0.65rem', bgcolor: '#f1f5f9', color: '#475569', borderRadius: '16px' }} />}
             {filters.hasWebsite && <Chip label="Has Website" size="small" onDelete={() => setFilters((f) => ({ ...f, hasWebsite: false }))}
-              sx={{ height: 20, fontSize: '0.65rem', bgcolor: '#f0f0f0', color: '#111111' }} />}
+              sx={{ height: 20, fontSize: '0.65rem', bgcolor: '#f1f5f9', color: '#475569', borderRadius: '16px' }} />}
             {filters.minRating > 0 && <Chip label={`≥${filters.minRating}★`} size="small" onDelete={() => setFilters((f) => ({ ...f, minRating: 0 }))}
-              sx={{ height: 20, fontSize: '0.65rem', bgcolor: '#fefce8', color: '#a16207' }} />}
+              sx={{ height: 20, fontSize: '0.65rem', bgcolor: '#fefce8', color: '#a16207', borderRadius: '16px' }} />}
             {filters.minReviews > 0 && <Chip label={`≥${filters.minReviews} reviews`} size="small" onDelete={() => setFilters((f) => ({ ...f, minReviews: 0 }))}
-              sx={{ height: 20, fontSize: '0.65rem', bgcolor: '#f5f5f5', color: '#6b7280' }} />}
+              sx={{ height: 20, fontSize: '0.65rem', bgcolor: '#f8fafc', color: '#64748b', borderRadius: '16px' }} />}
             <Box sx={{ flex: 1 }} />
             <FormControl size="small" sx={{ minWidth: 150 }}>
               <InputLabel sx={{ fontSize: '0.75rem' }}>Sort by</InputLabel>
               <Select value={sortBy} label="Sort by" onChange={(e) => setSortBy(e.target.value)}
                 startAdornment={<SortIcon sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }} />}
-                sx={{ fontSize: '0.8rem', '& .MuiSelect-select': { py: 0.8 } }}>
+                sx={{ fontSize: '0.8rem', borderRadius: '8px', '& .MuiSelect-select': { py: 0.8 } }}>
                 {SORT_OPTIONS.map((o) => <MenuItem key={o.value} value={o.value} sx={{ fontSize: '0.8rem' }}>{o.label}</MenuItem>)}
               </Select>
             </FormControl>
             <Tooltip title="Export CSV">
               <IconButton size="small" onClick={() => { exportCSV(sortedFiltered); showToast('CSV downloaded'); }}
-                sx={{ bgcolor: '#f5f5f5', '&:hover': { bgcolor: '#e5e5e5' } }}>
+                sx={{ borderRadius: '8px', bgcolor: '#f1f5f9', '&:hover': { bgcolor: '#e2e8f0' } }}>
                 <DownloadIcon fontSize="small" />
               </IconButton>
             </Tooltip>
             <Tooltip title="Export Excel (.xlsx)">
               <IconButton size="small" onClick={async () => { try { await exportXLSX(sortedFiltered); showToast('Excel downloaded'); } catch (e) { showToast(e.message, 'error'); } }}
-                sx={{ bgcolor: '#f0fdf4', '&:hover': { bgcolor: '#dcfce7' } }}>
+                sx={{ borderRadius: '8px', bgcolor: '#f0fdf4', '&:hover': { bgcolor: '#dcfce7' } }}>
                 <DownloadIcon fontSize="small" sx={{ color: '#16a34a' }} />
               </IconButton>
             </Tooltip>
@@ -641,30 +642,30 @@ const MapRadiusSearch = () => {
           {/* Bulk actions */}
           {selectedIds.size > 0 && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', p: 1.5,
-              borderRadius: 2, bgcolor: '#f5f5f5', border: '1px solid #e5e5e5' }}>
-              <CheckBoxIcon sx={{ fontSize: 16, color: '#111111' }} />
-              <Typography variant="caption" sx={{ fontWeight: 600, color: '#111111' }}>{selectedIds.size} selected</Typography>
+              borderRadius: '8px', bgcolor: '#f1f5f9', border: '1px solid #e2e8f0' }}>
+              <CheckBoxIcon sx={{ fontSize: 16, color: '#0f172a' }} />
+              <Typography variant="caption" sx={{ fontWeight: 700, color: '#0f172a' }}>{selectedIds.size} selected</Typography>
               <Button size="small" startIcon={<PhoneIcon sx={{ fontSize: 12 }} />}
                 onClick={() => { navigator.clipboard.writeText(selectedResults.map((r) => r.phone).filter(hasValue).join('\n')).then(() => showToast(`Copied ${selectedIds.size} phones`)); }}
-                sx={{ textTransform: 'none', fontSize: '0.72rem', color: '#111111', py: 0.3 }}>Copy phones</Button>
+                sx={{ borderRadius: '6px', textTransform: 'none', fontSize: '0.72rem', color: '#0f172a', py: 0.3 }}>Copy phones</Button>
               <Button size="small" startIcon={<ContentCopyIcon sx={{ fontSize: 12 }} />}
                 onClick={() => { navigator.clipboard.writeText(selectedResults.map((r) => r.storeName).join('\n')).then(() => showToast(`Copied ${selectedIds.size} names`)); }}
-                sx={{ textTransform: 'none', fontSize: '0.72rem', color: '#111111', py: 0.3 }}>Copy names</Button>
+                sx={{ borderRadius: '6px', textTransform: 'none', fontSize: '0.72rem', color: '#0f172a', py: 0.3 }}>Copy names</Button>
               <Button size="small"
                 onClick={() => { exportCSV(selectedResults, 'selected_results.csv'); showToast('CSV downloaded'); }}
-                sx={{ textTransform: 'none', fontSize: '0.72rem', color: '#111111', py: 0.3 }}>Export CSV</Button>
+                sx={{ borderRadius: '6px', textTransform: 'none', fontSize: '0.72rem', color: '#0f172a', py: 0.3 }}>Export CSV</Button>
               <Button size="small"
                 onClick={() => { selectedResults.forEach((r) => saveContactStatus(r.businessId, 'contacted')); refreshStatuses(); showToast(`Marked ${selectedIds.size} as contacted`); setSelectedIds(new Set()); }}
-                sx={{ textTransform: 'none', fontSize: '0.72rem', color: '#16a34a', py: 0.3 }}>Mark contacted</Button>
+                sx={{ borderRadius: '6px', textTransform: 'none', fontSize: '0.72rem', color: '#16a34a', py: 0.3 }}>Mark contacted</Button>
               <Button size="small" onClick={() => setSelectedIds(new Set())}
-                sx={{ textTransform: 'none', fontSize: '0.72rem', color: 'text.secondary', py: 0.3, ml: 'auto' }}>Clear</Button>
+                sx={{ borderRadius: '6px', textTransform: 'none', fontSize: '0.72rem', color: 'text.secondary', py: 0.3, ml: 'auto' }}>Clear</Button>
             </Box>
           )}
 
           {/* Cards */}
           <Box sx={{ overflowX: 'auto', overflowY: 'hidden', flex: 1, display: 'flex', gap: 1.5, pb: 0.5,
-            '&::-webkit-scrollbar': { height: 4 },
-            '&::-webkit-scrollbar-thumb': { bgcolor: '#d1d5db', borderRadius: 2 } }}>
+            '&::-webkit-scrollbar': { height: 6 },
+            '&::-webkit-scrollbar-thumb': { bgcolor: '#cbd5e1', borderRadius: '4px' } }}>
             {visibleResults.map((loc, idx) => (
               <Box key={loc.businessId} id={`result-card-${idx}`} sx={{ flexShrink: 0, width: 240 }}
                 onKeyDown={(e) => handleListKeyDown(e, idx)}>
@@ -680,8 +681,8 @@ const MapRadiusSearch = () => {
             {displayCount < sortedFiltered.length && (
               <Box sx={{ flexShrink: 0, width: 160, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Button variant="outlined" size="small" onClick={() => setDisplayCount((n) => n + 10)}
-                  sx={{ textTransform: 'none', fontSize: '0.75rem', borderColor: '#e5e5e5', color: '#111111',
-                    '&:hover': { borderColor: '#111111', bgcolor: '#f5f5f5' } }}>
+                  sx={{ borderRadius: '8px', textTransform: 'none', fontSize: '0.75rem', borderColor: '#e2e8f0', color: '#0f172a',
+                    '&:hover': { borderColor: '#0f172a', bgcolor: '#f8fafc' } }}>
                   Load {Math.min(10, sortedFiltered.length - displayCount)} more
                 </Button>
               </Box>
@@ -695,16 +696,16 @@ const MapRadiusSearch = () => {
   // ── Map panel ──────────────────────────────────────────────────────────────
   const MapPanel = (
     <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
-      <Box ref={mapRef} sx={{ width: '100%', height: '100%', borderRadius: 3 }} />
-      <Box sx={{ position: 'absolute', top: 16, left: 16, background: '#ffffff', border: '1px solid #e5e5e5', borderRadius: 2, p: 1.5, maxWidth: 220, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-        <Typography variant="caption" sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}>How to use</Typography>
+      <Box ref={mapRef} sx={{ width: '100%', height: '100%', borderRadius: 0 }} />
+      <Box sx={{ position: 'absolute', top: 16, left: 16, background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', p: 1.5, maxWidth: 220, boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
+        <Typography variant="caption" sx={{ fontWeight: 700, display: 'block', mb: 0.5, color: '#0f172a' }}>How to use</Typography>
         {['Click map to move circle', 'Drag circle to reposition', 'Drag edges to resize', 'Click a pin to view details'].map((tip) => (
           <Typography key={tip} variant="caption" display="block" color="text.secondary">• {tip}</Typography>
         ))}
       </Box>
       {results.length > 0 && (
-        <Box sx={{ position: 'absolute', top: 16, right: 16, background: '#111111', borderRadius: 2, px: 2, py: 0.8 }}>
-          <Typography variant="caption" sx={{ fontWeight: 700, color: '#fff' }}>{results.length} results</Typography>
+        <Box sx={{ position: 'absolute', top: 16, right: 16, background: '#0f172a', borderRadius: '8px', px: 2, py: 0.8, boxShadow: '0 4px 10px rgba(15,23,42,0.15)' }}>
+          <Typography variant="caption" sx={{ fontWeight: 700, color: '#ffffff' }}>{results.length} results</Typography>
         </Box>
       )}
     </Box>
@@ -726,7 +727,7 @@ const MapRadiusSearch = () => {
         onClose={() => setToast((t) => ({ ...t, open: false }))}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
         <Alert severity={toast.severity} onClose={() => setToast((t) => ({ ...t, open: false }))} action={toast.action}
-          sx={{ border: `1px solid rgba(${toast.severity === 'success' ? '16,185,129' : toast.severity === 'warning' ? '245,158,11' : toast.severity === 'info' ? '99,102,241' : '239,68,68'},0.3)` }}>
+          sx={{ borderRadius: '8px', border: `1px solid rgba(${toast.severity === 'success' ? '16,185,129' : toast.severity === 'warning' ? '245,158,11' : toast.severity === 'info' ? '99,102,241' : '239,68,68'},0.3)` }}>
           {toast.msg}
         </Alert>
       </Snackbar>
@@ -736,18 +737,18 @@ const MapRadiusSearch = () => {
           <Box sx={{ display: 'flex', gap: 3, flex: 1, minHeight: 0 }}>
             <Paper elevation={0} sx={{ width: 360, flexShrink: 0, p: 3,
               background: '#ffffff',
-              border: '1px solid #e5e5e5', borderRadius: 3, overflowY: 'auto',
-              '&::-webkit-scrollbar': { width: 4 },
-              '&::-webkit-scrollbar-thumb': { bgcolor: '#d1d5db', borderRadius: 2 } }}>
+              border: '1px solid #e2e8f0', borderRadius: '12px', overflowY: 'auto',
+              '&::-webkit-scrollbar': { width: 6 },
+              '&::-webkit-scrollbar-thumb': { bgcolor: '#cbd5e1', borderRadius: '4px' } }}>
               {ControlsPanel}
             </Paper>
             <Paper elevation={0} sx={{ flex: 1, background: '#ffffff',
-              border: '1px solid #e5e5e5', borderRadius: 3, overflow: 'hidden' }}>
+              border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden' }}>
               {MapPanel}
             </Paper>
           </Box>
-          <Paper elevation={0} sx={{ p: 2, background: '#ffffff',
-            border: '1px solid #e5e5e5', borderRadius: 3,
+          <Paper elevation={0} sx={{ p: 2.5, background: '#ffffff',
+            border: '1px solid #e2e8f0', borderRadius: '12px',
             display: 'flex', flexDirection: 'column', maxHeight: 340, overflow: 'hidden' }}>
             {ResultsPanel}
           </Paper>
@@ -755,9 +756,9 @@ const MapRadiusSearch = () => {
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 100px)' }}>
           <Tabs value={mobileTab} onChange={(_, v) => setMobileTab(v)}
-            sx={{ borderBottom: '1px solid #e5e5e5', minHeight: 44,
+            sx={{ borderBottom: '1px solid #e2e8f0', minHeight: 44,
               '& .MuiTab-root': { minHeight: 44, fontSize: '0.8rem', textTransform: 'none' },
-              '& .MuiTabs-indicator': { bgcolor: '#111111' } }}>
+              '& .MuiTabs-indicator': { bgcolor: '#0f172a' } }}>
             <Tab label="Search" />
             <Tab label="Map" />
             <Tab label={`Results${results.length ? ` (${results.length})` : ''}`} />

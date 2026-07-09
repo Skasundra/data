@@ -9,18 +9,34 @@
 - Clean Material-UI design
 
 ### Sidebar
-- **14 Scraper Options** with icons:
+- **6 Active Scraper Options** with icons (8 modules permanently excluded):
   - 🗺️ Google Maps
   - 📖 Yellow Pages
+  <!-- EXCLUDED: Yelp scraper is permanently disabled per product requirements
   - 🍽️ Yelp
+  -->
+  <!-- EXCLUDED: Better Business Bureau scraper is permanently disabled per product requirements
   - ✅ Better Business Bureau
+  -->
+  <!-- EXCLUDED: Angi scraper is permanently disabled per product requirements
   - 🔧 Angi
+  -->
   - 📞 JustDial (India)
+  <!-- EXCLUDED: IndiaMART scraper is permanently disabled per product requirements
   - 💼 IndiaMART (India B2B)
+  -->
+  <!-- EXCLUDED: Sulekha scraper is permanently disabled per product requirements
   - 🏷️ Sulekha (India)
+  -->
+  <!-- EXCLUDED: TradeIndia scraper is permanently disabled per product requirements
   - 🏪 TradeIndia (India B2B)
+  -->
+  <!-- EXCLUDED: ExportersIndia scraper is permanently disabled per product requirements
   - 🚚 ExportersIndia
+  -->
+  <!-- EXCLUDED: Manta scraper is permanently disabled per product requirements
   - 💼 Manta
+  -->
   - 🌍 Yellow Pages Canada
   - 📄 SuperPages
   - 🏙️ CitySearch

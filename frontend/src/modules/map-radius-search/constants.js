@@ -1,4 +1,4 @@
-// frontend/src/components/mapRadius/constants.js
+// frontend/src/modules/map-radius-search/constants.js
 
 export const DEFAULT_CENTER = { lat: 34.0522, lng: -118.2437 };
 export const HISTORY_KEY = 'radius_search_history';
