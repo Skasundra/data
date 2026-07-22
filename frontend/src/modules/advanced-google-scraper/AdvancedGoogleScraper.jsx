@@ -92,24 +92,13 @@ const AdvancedGoogleScraper = () => {
 
   // ── Reference for active polling ──
   const pollTimerRef = useRef(null);
-  const terminalEndRef = useRef(null);
+  const terminalScrollRef = useRef(null);
   const [consoleOpen, setConsoleOpen] = useState(true);
 
-  // Auto-scroll terminal log and ensure container is visible
-  const logsContainerRef = useRef(null);
-
+  // Auto-scroll terminal log internally without jumping main viewport
   useEffect(() => {
-    if (activeJob?.logs) {
-      // First, make sure the logs container is in view
-      if (logsContainerRef.current) {
-        logsContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }
-      // Then, scroll to the end of the logs
-      setTimeout(() => {
-        if (terminalEndRef.current) {
-          terminalEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
-        }
-      }, 100);
+    if (activeJob?.logs && terminalScrollRef.current) {
+      terminalScrollRef.current.scrollTop = terminalScrollRef.current.scrollHeight;
     }
   }, [activeJob?.logs]);
 
@@ -916,8 +905,9 @@ const AdvancedGoogleScraper = () => {
 
                   {monitorTabIndex === 0 ? (
                     /* Console Logs tab */
-                    <Paper elevation={0} sx={{ p: 0, bgcolor: '#1a1b26', overflow: 'hidden', borderRadius: '8px' }} ref={logsContainerRef}>
+                    <Paper elevation={0} sx={{ p: 0, bgcolor: '#1a1b26', overflow: 'hidden', borderRadius: '8px' }}>
                       <Box
+                        ref={terminalScrollRef}
                         sx={{
                           p: 2,
                           height: 200,
@@ -960,7 +950,6 @@ const AdvancedGoogleScraper = () => {
                             );
                           })
                         )}
-                        <div ref={terminalEndRef} />
                       </Box>
                     </Paper>
                   ) : (

@@ -115,6 +115,7 @@ const sanitizeSheetName = (name) => {
 
 /**
  * Build a CSV string from records + selected fields.
+ * Phone fields are wrapped in ="value" to prevent Excel scientific notation.
  */
 const buildCsvString = (records, exportFields) => {
   // Precompute which fields are phone fields
@@ -128,7 +129,13 @@ const buildCsvString = (records, exportFields) => {
       const flat = flattenObject(record);
       csv += exportFields.map((field) => {
         let val = flat[field];
-        if (phoneFields.has(field)) val = formatPhoneNumber(val);
+        if (phoneFields.has(field)) {
+          val = formatPhoneNumber(val);
+          // Wrap in ="value" so Excel treats it as text, not a number
+          if (val !== null && val !== undefined && String(val).trim() !== "" && String(val).toUpperCase() !== "N/A") {
+            return `="${String(val)}"`;
+          }
+        }
         return escapeCsvField(val);
       }).join(",") + "\n";
     }
@@ -138,20 +145,27 @@ const buildCsvString = (records, exportFields) => {
 
 /**
  * Build an array-of-arrays (AOA) for an Excel worksheet.
+ * Returns { aoa, phoneColumnIndices } so the caller can apply text formatting.
  */
 const buildAoa = (records, exportFields) => {
   const phoneFields = new Set(exportFields.filter(isPhoneField));
+  const phoneColumnIndices = [];
+  exportFields.forEach((f, i) => { if (phoneFields.has(f)) phoneColumnIndices.push(i); });
 
   const aoa = [exportFields];
   for (const record of records) {
     const flat = flattenObject(record);
     aoa.push(exportFields.map((field) => {
       let v = flat[field];
-      if (phoneFields.has(field)) v = formatPhoneNumber(v);
+      if (phoneFields.has(field)) {
+        v = formatPhoneNumber(v);
+        // Ensure the value is a string so XLSX doesn't store it as a number
+        if (v !== null && v !== undefined) return String(v);
+      }
       return v === null || v === undefined ? "" : v;
     }));
   }
-  return aoa;
+  return { aoa, phoneColumnIndices };
 };
 
 /**
@@ -297,6 +311,23 @@ const parseJsonFile = async (req, res) => {
     const { records, cities, categories, isGmapsFormat } = parseJsonToRecords(jsonData);
     const fields = detectFields(records);
 
+    // Extract unique values for all fields (performance optimized)
+    const uniqueValues = {};
+    for (const field of fields) {
+      const vals = new Set();
+      for (const r of records) {
+        const flat = flattenObject(r);
+        const val = flat[field];
+        if (val !== null && val !== undefined) {
+          const str = String(val).trim();
+          if (str !== "" && str.toUpperCase() !== "N/A") {
+            vals.add(str);
+          }
+        }
+      }
+      uniqueValues[field] = [...vals].sort();
+    }
+
     // Return sample data (first 5 records flattened)
     const sampleData = records.slice(0, 5).map((r) => flattenObject(r));
 
@@ -312,6 +343,7 @@ const parseJsonFile = async (req, res) => {
         totalRecords: records.length,
         isGmapsFormat,
         sampleData,
+        uniqueValues,
       },
     });
   } catch (error) {
@@ -344,9 +376,11 @@ const convertJsonToCsv = async (req, res) => {
       requireNonEmpty,
       exportMode = "single",
       outputFormat = "csv",
+      deduplicateFields,
+      fieldFilters,
     } = req.body;
 
-    log.info(`Convert — mode=${exportMode}, format=${outputFormat}, city=${filterCity}, category=${filterCategory}`);
+    log.info(`Convert — mode=${exportMode}, format=${outputFormat}, city=${filterCity}, category=${filterCategory}, deduplicateFields=${JSON.stringify(deduplicateFields)}, fieldFilters=${JSON.stringify(fieldFilters)}`);
 
     let jsonData;
     if (req.file) {
@@ -373,6 +407,22 @@ const convertJsonToCsv = async (req, res) => {
     if (isGmapsFormat) {
       if (filterCity) records = records.filter((r) => r._city === filterCity);
       if (filterCategory) records = records.filter((r) => r._category === filterCategory);
+    }
+
+    // ── Apply dynamic field filters ──
+    if (fieldFilters && typeof fieldFilters === "object") {
+      for (const [field, filterVals] of Object.entries(fieldFilters)) {
+        if (Array.isArray(filterVals) && filterVals.length > 0) {
+          records = records.filter((r) => {
+            const flat = flattenObject(r);
+            const val = flat[field];
+            if (val === null || val === undefined) return false;
+            return filterVals.some(
+              (fv) => String(val).trim().toLowerCase() === String(fv).trim().toLowerCase()
+            );
+          });
+        }
+      }
     }
 
     if (records.length === 0) {
@@ -411,22 +461,51 @@ const convertJsonToCsv = async (req, res) => {
       });
     }
 
+    // ── Deduplicate records if requested ──
+    let finalRecords = filteredRecords;
+    if (deduplicateFields && Array.isArray(deduplicateFields) && deduplicateFields.length > 0) {
+      const seen = new Set();
+      finalRecords = [];
+      for (const record of filteredRecords) {
+        const flat = flattenObject(record);
+        // Construct composite key based on selected deduplicateFields
+        const compositeKey = deduplicateFields.map((field) => {
+          let val = flat[field];
+          if (isPhoneField(field)) val = formatPhoneNumber(val);
+          return val === null || val === undefined ? "" : String(val).trim().toLowerCase();
+        }).join("|");
+
+        if (!seen.has(compositeKey)) {
+          seen.add(compositeKey);
+          finalRecords.push(record);
+        }
+      }
+      log.info(`Deduplicated: ${filteredRecords.length} → ${finalRecords.length} records using keys: [${deduplicateFields.join(", ")}]`);
+    }
+
+    if (finalRecords.length === 0) {
+      return res.status(404).json({
+        status: 404,
+        message: `No records match the filter criteria after deduplication`,
+      });
+    }
+
     // ── Build groups based on export mode ──
     // Each group: { name, records }
     let groups = [];
     if (exportMode === "single" || !isGmapsFormat) {
-      groups = [{ name: "all_data", records: filteredRecords }];
+      groups = [{ name: "all_data", records: finalRecords }];
     } else if (exportMode === "city") {
-      const map = groupRecords(filteredRecords, (r) => r._city);
+      const map = groupRecords(finalRecords, (r) => r._city);
       groups = [...map.entries()].map(([name, recs]) => ({ name, records: recs }));
     } else if (exportMode === "category") {
-      const map = groupRecords(filteredRecords, (r) => r._category);
+      const map = groupRecords(finalRecords, (r) => r._category);
       groups = [...map.entries()].map(([name, recs]) => ({ name, records: recs }));
     } else if (exportMode === "city-category") {
-      const map = groupRecords(filteredRecords, (r) => `${r._city} - ${r._category}`);
+      const map = groupRecords(finalRecords, (r) => `${r._city} - ${r._category}`);
       groups = [...map.entries()].map(([name, recs]) => ({ name, records: recs }));
     } else {
-      groups = [{ name: "all_data", records: filteredRecords }];
+      groups = [{ name: "all_data", records: finalRecords }];
     }
 
     // Sort groups by name for predictable output
@@ -451,8 +530,25 @@ const convertJsonToCsv = async (req, res) => {
         }
         usedSheetNames.add(uniqueName);
 
-        const aoa = buildAoa(group.records, exportFields);
+        const { aoa, phoneColumnIndices } = buildAoa(group.records, exportFields);
         const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+        // Force phone columns to text format so Excel doesn't show scientific notation
+        if (phoneColumnIndices.length > 0 && ws['!ref']) {
+          const range = XLSX.utils.decode_range(ws['!ref']);
+          for (const colIdx of phoneColumnIndices) {
+            for (let row = range.s.r + 1; row <= range.e.r; row++) {
+              const cellAddr = XLSX.utils.encode_cell({ r: row, c: colIdx });
+              const cell = ws[cellAddr];
+              if (cell) {
+                cell.t = 's'; // force string type
+                cell.z = '@'; // text number format
+                cell.v = String(cell.v);
+              }
+            }
+          }
+        }
+
         XLSX.utils.book_append_sheet(wb, ws, uniqueName);
       }
 
@@ -460,9 +556,9 @@ const convertJsonToCsv = async (req, res) => {
       const filename = `export_${exportMode}_${timestamp}.xlsx`;
       res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
       res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
-      res.setHeader("X-Total-Records", filteredRecords.length);
+      res.setHeader("X-Total-Records", finalRecords.length);
       res.setHeader("X-Total-Sheets", groups.length);
-      log.info(`Excel generated: ${groups.length} sheets, ${filteredRecords.length} records`);
+      log.info(`Excel generated: ${groups.length} sheets, ${finalRecords.length} records`);
       return res.send(buffer);
     }
 
@@ -483,7 +579,7 @@ const convertJsonToCsv = async (req, res) => {
     const filename = `export_${exportMode}_${timestamp}.zip`;
     res.setHeader("Content-Type", "application/zip");
     res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
-    res.setHeader("X-Total-Records", filteredRecords.length);
+    res.setHeader("X-Total-Records", finalRecords.length);
     res.setHeader("X-Total-Files", groups.length);
 
     const archive = archiver("zip", { zlib: { level: 9 } });

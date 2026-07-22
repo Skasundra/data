@@ -50,6 +50,13 @@ export const scraperCategories = [
     ],
   },
   {
+    id: 'hiring',
+    label: 'Hiring Tools',
+    items: [
+      { id: 'hiring-post-scraper', name: 'Hiring Scraper', icon: 'WorkOutline', route: '/scrapers/hiring-posts', description: 'LinkedIn hiring post finder', color: '#0A66C2' },
+    ],
+  },
+  {
     id: 'location',
     label: 'Location Tools',
     items: [

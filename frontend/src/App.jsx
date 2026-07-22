@@ -19,6 +19,7 @@ import YellowPagesCanadaScraper from './modules/yellowpages-ca/YellowPagesCanada
 import JustDialScraper from './modules/justdial/JustDialScraper';
 import IdbfScraper from './modules/idbf-scraper/IdbfScraper';
 import LinkedInScraper from './modules/linkedin-scraper/LinkedInScraper';
+import HiringPostScraper from './modules/hiring-post-scraper/HiringPostScraper';
 import MapRadiusSearch from './modules/map-radius-search/MapRadiusSearch';
 import JsonToCsvConverter from './modules/json-to-csv/JsonToCsvConverter';
 
@@ -54,6 +55,9 @@ function App() {
 
               {/* Enrichment */}
               <Route path="/scrapers/linkedin" element={<LinkedInScraper />} />
+
+              {/* Hiring Tools */}
+              <Route path="/scrapers/hiring-posts" element={<HiringPostScraper />} />
 
               {/* Location Tools */}
               <Route path="/scrapers/map-radius" element={<MapRadiusSearch />} />

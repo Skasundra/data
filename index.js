@@ -30,6 +30,7 @@ const { searchByRadius }       = require("./radiusSearch");
 const { getIdbfStates, getIdbfCategories, searchIdbf } = require("./idbf");
 const { parseJsonFile, convertJsonToCsv, listServerJsonFiles } = require("./jsonToCsv");
 const { advancedGoogleRouter } = require("./advancedGoogleScraper");
+const { hiringPostRouter } = require("./hiringPostScraper");
 
 const app  = express();
 const PORT = process.env.PORT || 9000;
@@ -63,7 +64,8 @@ app.use(
 );
 
 // ─── Body parsing ─────────────────────────────────────────────────────────────
-app.use(bodyParser.json({ limit: "1mb" }));
+app.use(bodyParser.json({ limit: "50mb" }));
+app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 
 // ─── Rate limiting ────────────────────────────────────────────────────────────
 // General API limiter — 60 requests per minute per IP
@@ -137,6 +139,7 @@ app.get("/", (_req, res) => {
       citysearch:           "POST /search-citysearch",
       linkedinEnrichment:   "POST /linkedin-enrich",
       radiusSearch:         "POST /search-radius",
+      hiringPostScraper:    "USE  /hiring-posts",
       idbfStates:            "GET  /idbf-states",
       idbfCategories:        "GET  /idbf-categories",
       idbfSearch:            "POST /search-idbf",
@@ -171,6 +174,9 @@ app.post("/linkedin-enrich",         scrapeLimiter, withTimeout(10 * 60 * 1000),
 
 // ─── Advanced Google Scraper routes ──────────────────────────────────────────
 app.use("/advanced-google", advancedGoogleRouter);
+
+// ─── Hiring Post Scraper routes ──────────────────────────────────────────────
+app.use("/hiring-posts", hiringPostRouter);
 
 // ─── JSON to CSV converter routes ────────────────────────────────────────────
 const csvUpload = multer({ dest: "uploads/", limits: { fileSize: 100 * 1024 * 1024 } }); // 100MB

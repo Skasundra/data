@@ -29,7 +29,7 @@ const getBrowserInstance = async () => {
         "--window-size=1920,1080",
         "--start-maximized",
         "--disable-extensions-except=/path/to/ublock", // Optional: use uBlock
-        "--user-data-dir=/tmp/chrome-linkedin", // Persistent session
+        "--user-data-dir=" + path.join(require("os").tmpdir(), "chrome-linkedin"), // Persistent session (cross-platform)
       ],
       executablePath:
         process.env.CHROME_EXECUTABLE_PATH ||
@@ -77,6 +77,86 @@ const searchCompanyLinkedIn = async (page, companyName, location = "") => {
   }
 };
 
+const attemptAutoLogin = async (page) => {
+  const email = process.env.LINKEDIN_EMAIL;
+  const password = process.env.LINKEDIN_PASSWORD;
+
+  if (!email || !password) {
+    console.log("⚠️ Credentials not set in environment variables (LINKEDIN_EMAIL / LINKEDIN_PASSWORD).");
+    return false;
+  }
+
+  console.log("🚀 Attempting automated login using environment credentials...");
+
+  try {
+    // 1. Wait for email field
+    await page.waitForSelector('input[type="email"], input[autocomplete="username"], input[id*="username"]', { timeout: 15000 });
+    
+    // 2. Type email
+    await page.focus('input[type="email"], input[autocomplete="username"], input[id*="username"]');
+    await page.evaluate(() => {
+      const el = document.querySelector('input[type="email"], input[autocomplete="username"], input[id*="username"]');
+      if (el) el.value = '';
+    });
+    await page.type('input[type="email"], input[autocomplete="username"], input[id*="username"]', email, { delay: 50 + Math.random() * 50 });
+    await new Promise(r => setTimeout(r, 500 + Math.random() * 500));
+
+    // 3. Type password
+    await page.waitForSelector('input[type="password"], input[autocomplete="current-password"]', { timeout: 10000 });
+    await page.focus('input[type="password"], input[autocomplete="current-password"]');
+    await page.evaluate(() => {
+      const el = document.querySelector('input[type="password"], input[autocomplete="current-password"]');
+      if (el) el.value = '';
+    });
+    await page.type('input[type="password"], input[autocomplete="current-password"]', password, { delay: 50 + Math.random() * 50 });
+    await new Promise(r => setTimeout(r, 500 + Math.random() * 500));
+
+    // 4. Click Sign In Button
+    console.log("Clicking Sign in button...");
+    await page.evaluate(() => {
+      const buttons = Array.from(document.querySelectorAll('button, input[type="submit"]'));
+      const signInBtn = buttons.find(b => {
+        const text = b.textContent?.trim() || b.value?.trim() || "";
+        return text.toLowerCase() === "sign in" || text.toLowerCase().includes("sign in");
+      });
+      if (signInBtn) {
+        signInBtn.click();
+      } else {
+        const form = document.querySelector('form');
+        if (form) form.submit();
+      }
+    });
+
+    // 5. Wait for navigation/checkpoint redirect
+    await page.waitForNavigation({ waitUntil: "networkidle2", timeout: 15000 }).catch(() => {});
+    await new Promise(r => setTimeout(r, 3000));
+
+    // Check if still needs login
+    const stillNeedsLogin = await page.evaluate(() => {
+      const url = window.location.href || "";
+      const bodyText = document.body.innerText || "";
+      if (url.includes("/uas/login") || url.includes("/login") || url.includes("/checkpoint")) {
+        return true;
+      }
+      return document.body.innerText.includes('Sign in') || 
+             document.body.innerText.includes('Join LinkedIn') ||
+             !!document.querySelector('.authwall') ||
+             bodyText.includes('Email or phone');
+    });
+
+    if (!stillNeedsLogin) {
+      console.log("✅ Automated login succeeded!");
+      return true;
+    } else {
+      console.log("⚠️ Automated login did not bypass login wall (possible CAPTCHA, verification code, or login error).");
+      return false;
+    }
+  } catch (err) {
+    console.log(`⚠️ Automated login attempt failed: ${err.message}`);
+    return false;
+  }
+};
+
 // Function to scrape LinkedIn company page details
 const scrapeLinkedInCompanyPage = async (page, linkedinUrl, companyData) => {
   try {
@@ -88,14 +168,58 @@ const scrapeLinkedInCompanyPage = async (page, linkedinUrl, companyData) => {
     await new Promise(resolve => setTimeout(resolve, 5000));
     
     // Check if we need to handle LinkedIn login/access restrictions
-    const needsLogin = await page.evaluate(() => {
+    let needsLogin = await page.evaluate(() => {
+      const url = window.location.href || "";
+      const bodyText = document.body.innerText || "";
+      if (url.includes("/uas/login") || url.includes("/login") || url.includes("/checkpoint")) {
+        return true;
+      }
       return document.body.innerText.includes('Sign in') || 
              document.body.innerText.includes('Join LinkedIn') ||
-             document.querySelector('.authwall');
+             !!document.querySelector('.authwall') ||
+             bodyText.includes('Email or phone');
     });
     
     if (needsLogin) {
-      console.log("⚠️ LinkedIn requires login - extracting limited public data");
+      console.log("⚠️ LinkedIn requires login - navigating to login page...");
+      await page.goto("https://www.linkedin.com/login", { waitUntil: "networkidle2", timeout: 30000 });
+      
+      let loggedIn = await attemptAutoLogin(page);
+      
+      if (!loggedIn) {
+        console.log("⏳ Automated login unsuccessful or needs manual action. Waiting for manual login (up to 3 minutes)...");
+        const startTime = Date.now();
+        const maxWaitMs = 180000; // 3 minutes
+        
+        while (Date.now() - startTime < maxWaitMs) {
+          await new Promise(r => setTimeout(r, 5000));
+          const stillNeedsLogin = await page.evaluate(() => {
+            const url = window.location.href || "";
+            const bodyText = document.body.innerText || "";
+            if (url.includes("/uas/login") || url.includes("/login") || url.includes("/checkpoint")) {
+              return true;
+            }
+            return document.body.innerText.includes('Sign in') || 
+                   document.body.innerText.includes('Join LinkedIn') ||
+                   !!document.querySelector('.authwall') ||
+                   bodyText.includes('Email or phone');
+          });
+          
+          if (!stillNeedsLogin) {
+            loggedIn = true;
+            break;
+          }
+          console.log(`⏳ Waiting for manual login... ${Math.round((maxWaitMs - (Date.now() - startTime)) / 1000)}s remaining.`);
+        }
+      }
+      
+      if (loggedIn) {
+        console.log("✅ Login successful! Re-navigating to company page...");
+        await page.goto(linkedinUrl, { waitUntil: "networkidle2", timeout: 30000 });
+        await new Promise(resolve => setTimeout(resolve, 5000));
+      } else {
+        console.log("❌ Login timed out. Proceeding with limited public data extraction...");
+      }
     }
     
     // Extract company details

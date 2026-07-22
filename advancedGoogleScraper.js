@@ -299,6 +299,36 @@ const scrapeListings = async (page, keyword, locationText, maxResults) => {
             address = part;
           }
         });
+
+        // Clean up category if it is a concatenated string containing storeName or rating details
+        if (category) {
+          let cleanedCategory = category.trim();
+
+          // If category contains the storeName at the start, strip it
+          if (storeName) {
+            const storeNameNormalized = storeName.toLowerCase().trim();
+            if (cleanedCategory.toLowerCase().startsWith(storeNameNormalized)) {
+              cleanedCategory = cleanedCategory.slice(storeNameNormalized.length).trim();
+            }
+          }
+
+          // If the category contains a rating pattern (e.g., "4.9" or " 4.9"), strip everything up to and including the rating
+          const ratingRegex = /(?:^|.*\s)([1-5]\.[0-9])(?:\s*\(\d[\d,]*\))?\s*(.*)/i;
+          const match = cleanedCategory.match(ratingRegex);
+          if (match) {
+            cleanedCategory = match[2].trim();
+          }
+
+          // Strip any leading rating that wasn't matched (e.g. starts with digits/dot)
+          cleanedCategory = cleanedCategory.replace(/^[\d.]+\s*(?:\(\d[\d,]*\))?\s*/, "").trim();
+
+          // Strip any leading separators
+          if (cleanedCategory.startsWith("·")) {
+            cleanedCategory = cleanedCategory.slice(1).trim();
+          }
+
+          category = cleanedCategory;
+        }
       }
 
       const websiteEl =
@@ -424,7 +454,7 @@ const runSingleScrapeQuery = async (jobId, keyword, location, maxResults = 20) =
 // ─── Job Execution Queue ─────────────────────────────────────────────────────
 const activeJobs = new Map(); // jobId -> abortController
 
-const executeJob = async (jobId) => {
+const executeJob = async (jobId, { isResume = false } = {}) => {
   const abortController = new AbortController();
   activeJobs.set(jobId, abortController);
 
@@ -436,13 +466,21 @@ const executeJob = async (jobId) => {
   }
 
   job.status = "Running";
-  job.startedAt = new Date().toISOString();
-  job.logs = [];
+  if (!isResume) {
+    job.startedAt = new Date().toISOString();
+    job.logs = [];
+  } else {
+    job.resumedAt = new Date().toISOString();
+  }
   writeJobs(jobs);
 
-  addJobLog(jobId, `Job "${job.name}" started in ${job.executionMode} execution mode.`);
+  if (isResume) {
+    addJobLog(jobId, `Job "${job.name}" RESUMED — re-running incomplete queries in ${job.executionMode} mode.`);
+  } else {
+    addJobLog(jobId, `Job "${job.name}" started in ${job.executionMode} execution mode.`);
+  }
 
-  const results = [];
+  const results = isResume ? readResults(jobId) : [];
   const MAX_RETRIES = 2;
 
   const runQueryWithRetry = async (queryObj) => {
@@ -455,7 +493,7 @@ const executeJob = async (jobId) => {
       // Reload jobs array to get latest status if modified externally
       const currentJobs = readJobs();
       const currentJob = currentJobs.find((j) => j.id === jobId);
-      if (currentJob && currentJob.status === "Cancelled") {
+      if (currentJob && (currentJob.status === "Cancelled" || currentJob.status === "Paused")) {
         throw new Error("Job Cancelled");
       }
 
@@ -555,7 +593,23 @@ const executeJob = async (jobId) => {
   };
 
   try {
-    const queries = job.queries;
+    const queries = isResume
+      ? job.queries.filter(q => q.status !== "Completed")
+      : job.queries;
+
+    if (isResume && queries.length === 0) {
+      addJobLog(jobId, "All queries already completed — nothing to resume.");
+      const earlyJobs = readJobs();
+      const earlyJob = earlyJobs.find((j) => j.id === jobId);
+      if (earlyJob) {
+        earlyJob.status = "Completed";
+        earlyJob.completedAt = new Date().toISOString();
+        writeJobs(earlyJobs);
+      }
+      activeJobs.delete(jobId);
+      return;
+    }
+
     if (job.executionMode === "parallel") {
       const concurrencyLimit = Math.min(Math.max(parseInt(job.concurrency, 10) || 2, 1), 5);
       addJobLog(jobId, `Launching parallel workers with concurrency limit of ${concurrencyLimit} active tabs...`);
@@ -583,10 +637,13 @@ const executeJob = async (jobId) => {
     const currentJobs = readJobs();
     const finalJob = currentJobs.find((j) => j.id === jobId);
     if (finalJob) {
-      if (abortController.signal.aborted || finalJob.status === "Cancelled") {
-        finalJob.status = "Cancelled";
-        addJobLog(jobId, "Scraping task was cancelled by user.");
-        log.info(`Job ${jobId} was cancelled.`);
+      if (abortController.signal.aborted || finalJob.status === "Cancelled" || finalJob.status === "Paused") {
+        if (finalJob.status !== "Paused") {
+          finalJob.status = "Cancelled";
+        }
+        const statusLabel = finalJob.status === "Paused" ? "paused" : "cancelled";
+        addJobLog(jobId, `Scraping task was ${statusLabel} by user.`);
+        log.info(`Job ${jobId} was ${statusLabel}.`);
       } else {
         const hasFailed = finalJob.queries.every((q) => q.status === "Failed");
         finalJob.status = hasFailed ? "Failed" : "Completed";
@@ -601,10 +658,14 @@ const executeJob = async (jobId) => {
     const currentJobs = readJobs();
     const finalJob = currentJobs.find((j) => j.id === jobId);
     if (finalJob) {
-      finalJob.status = error.message === "Job Cancelled" ? "Cancelled" : "Failed";
-      finalJob.error = error.message;
+      if (finalJob.status === "Paused") {
+        addJobLog(jobId, "Scraping task paused by user.");
+      } else {
+        finalJob.status = error.message === "Job Cancelled" ? "Cancelled" : "Failed";
+        finalJob.error = error.message;
+        addJobLog(jobId, `Scraping task critical failure: ${error.message}`);
+      }
       finalJob.completedAt = new Date().toISOString();
-      addJobLog(jobId, `Scraping task critical failure: ${error.message}`);
       writeJobs(currentJobs);
     }
   } finally {
@@ -729,11 +790,11 @@ router.delete("/jobs/:jobId", (req, res) => {
   }
 
   // Update status to Cancelled
-  if (["Pending", "Running"].includes(job.status)) {
+  if (["Pending", "Running", "Paused"].includes(job.status)) {
     job.status = "Cancelled";
     job.completedAt = new Date().toISOString();
     job.queries.forEach((q) => {
-      if (["Pending", "Running"].includes(q.status)) {
+      if (["Pending", "Running", "Paused"].includes(q.status)) {
         q.status = "Cancelled";
       }
     });
@@ -755,6 +816,128 @@ router.delete("/jobs/:jobId", (req, res) => {
   }
 
   return res.json({ status: 200, message: "Job deleted successfully." });
+});
+
+// 6. Pause a running job
+router.post("/jobs/:jobId/pause", async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const jobs = readJobs();
+    const job = jobs.find((j) => j.id === jobId);
+
+    if (!job) {
+      return res.status(404).json({ status: 404, message: "Job not found." });
+    }
+
+    if (job.status !== "Running") {
+      return res.status(400).json({
+        status: 400,
+        message: `Cannot pause job with status "${job.status}". Only Running jobs can be paused.`,
+      });
+    }
+
+    // Abort the running execution gracefully
+    const controller = activeJobs.get(jobId);
+    if (controller) {
+      controller.abort();
+      activeJobs.delete(jobId);
+    }
+
+    // Update job status to Paused
+    job.status = "Paused";
+    job.pausedAt = new Date().toISOString();
+    job.queries.forEach((q) => {
+      if (q.status === "Running") {
+        q.status = "Paused";
+      }
+    });
+    writeJobs(jobs);
+
+    addJobLog(jobId, "Job paused by user.");
+
+    const completedCount = job.queries.filter((q) => q.status === "Completed").length;
+    const remainingCount = job.queries.length - completedCount;
+
+    return res.json({
+      status: 200,
+      message: `Job paused successfully. ${completedCount} queries completed, ${remainingCount} remaining. Use POST /jobs/${jobId}/resume to continue.`,
+      data: job,
+    });
+  } catch (error) {
+    log.error("Failed to pause job:", error.message);
+    return res.status(500).json({ status: 500, message: error.message });
+  }
+});
+
+// 7. Resume a failed/cancelled/paused job
+router.post("/jobs/:jobId/resume", async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const jobs = readJobs();
+    const job = jobs.find((j) => j.id === jobId);
+
+    if (!job) {
+      return res.status(404).json({ status: 404, message: "Job not found." });
+    }
+
+    // Only allow resuming jobs that are not currently active
+    const resumableStatuses = ["Failed", "Cancelled", "Paused"];
+    if (!resumableStatuses.includes(job.status)) {
+      return res.status(400).json({
+        status: 400,
+        message: `Cannot resume job with status "${job.status}". Only Failed, Cancelled, or Paused jobs can be resumed.`,
+      });
+    }
+
+    // Prevent double-start
+    if (activeJobs.has(jobId)) {
+      return res.status(409).json({
+        status: 409,
+        message: "Job is already running.",
+      });
+    }
+
+    // Reset non-completed query statuses back to Pending
+    const pendingQueries = [];
+    job.queries.forEach((q) => {
+      if (q.status !== "Completed") {
+        q.status = "Pending";
+        q.error = null;
+        pendingQueries.push(q);
+      }
+    });
+
+    if (pendingQueries.length === 0) {
+      job.status = "Completed";
+      job.completedAt = new Date().toISOString();
+      writeJobs(jobs);
+      return res.json({
+        status: 200,
+        message: "All queries already completed. Job marked as Completed.",
+        data: job,
+      });
+    }
+
+    // Clear previous error and update status
+    job.error = null;
+    writeJobs(jobs);
+
+    // Run job in background with resume flag
+    executeJob(job.id, { isResume: true });
+
+    return res.json({
+      status: 200,
+      message: `Job resumed. ${pendingQueries.length} of ${job.queries.length} queries will be re-processed.`,
+      data: {
+        ...job,
+        pendingQueryCount: pendingQueries.length,
+        completedQueryCount: job.queries.length - pendingQueries.length,
+      },
+    });
+  } catch (error) {
+    log.error("Failed to resume job:", error.message);
+    return res.status(500).json({ status: 500, message: error.message });
+  }
 });
 
 module.exports = { advancedGoogleRouter: router };

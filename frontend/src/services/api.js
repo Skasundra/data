@@ -150,4 +150,50 @@ export const deleteAdvancedGoogleJob = async (jobId) => {
   }
 };
 
+// ─── Hiring Post Scraper API Calls ────────────────────────────────────────────
+export const createHiringPostJob = async (data) => {
+  try {
+    const response = await api.post('/hiring-posts/jobs', data);
+    return response.data;
+  } catch (error) {
+    normaliseError(error);
+  }
+};
+
+export const fetchHiringPostJobs = async () => {
+  try {
+    const response = await api.get('/hiring-posts/jobs');
+    return response.data;
+  } catch (error) {
+    normaliseError(error);
+  }
+};
+
+export const fetchHiringPostJobStatus = async (jobId) => {
+  try {
+    const response = await api.get(`/hiring-posts/jobs/${jobId}`);
+    return response.data;
+  } catch (error) {
+    normaliseError(error);
+  }
+};
+
+export const fetchHiringPostJobResults = async (jobId) => {
+  try {
+    const response = await api.get(`/hiring-posts/jobs/${jobId}/results`);
+    return response.data;
+  } catch (error) {
+    normaliseError(error);
+  }
+};
+
+export const deleteHiringPostJob = async (jobId) => {
+  try {
+    const response = await api.delete(`/hiring-posts/jobs/${jobId}`);
+    return response.data;
+  } catch (error) {
+    normaliseError(error);
+  }
+};
+
 export default api;

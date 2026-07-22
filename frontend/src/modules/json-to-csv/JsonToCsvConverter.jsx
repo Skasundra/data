@@ -1,7 +1,7 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   Box, Paper, Button, Typography, CircularProgress, Alert, Chip,
-  Checkbox, FormGroup, LinearProgress,
+  Checkbox, FormGroup, LinearProgress, TextField, ListSubheader, InputAdornment,
   Fade, Select, MenuItem, FormControl, InputLabel, IconButton,
   Tooltip, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
 } from '@mui/material';
@@ -11,6 +11,8 @@ import StorageIcon from '@mui/icons-material/Storage';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import SelectAllIcon from '@mui/icons-material/SelectAll';
 import DeselectIcon from '@mui/icons-material/Deselect';
+import ClearIcon from '@mui/icons-material/Clear';
+import SearchIcon from '@mui/icons-material/Search';
 import PreviewIcon from '@mui/icons-material/Preview';
 import TableChartIcon from '@mui/icons-material/TableChart';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -39,6 +41,9 @@ const JsonToCsvConverter = () => {
   const [parsedData, setParsedData] = useState(null);
   const [selectedFields, setSelectedFields] = useState(new Set());
   const [allowEmpty, setAllowEmpty] = useState(new Set());
+  const [deduplicateFields, setDeduplicateFields] = useState(new Set());
+  const [fieldFilters, setFieldFilters] = useState({});
+  const [filterSearchText, setFilterSearchText] = useState({});
   const [exportMode, setExportMode] = useState('single');
   const [outputFormat, setOutputFormat] = useState('csv');
   const [filterCity, setFilterCity] = useState('');
@@ -104,6 +109,8 @@ const JsonToCsvConverter = () => {
       let payload = {
         selectedFields: [...selectedFields],
         allowEmpty: [...allowEmpty],
+        deduplicateFields: [...deduplicateFields],
+        fieldFilters,
         exportMode,
         outputFormat,
       };
@@ -149,7 +156,7 @@ const JsonToCsvConverter = () => {
     } finally {
       setExporting(false);
     }
-  }, [selectedFields, allowEmpty, exportMode, outputFormat, filterCity, filterCategory, selectedServerFile, uploadedFile, parsedData]);
+  }, [selectedFields, allowEmpty, deduplicateFields, fieldFilters, exportMode, outputFormat, filterCity, filterCategory, selectedServerFile, uploadedFile, parsedData]);
 
   // ── Field selection helpers ──
   const toggleField = (field) => {
@@ -157,8 +164,10 @@ const JsonToCsvConverter = () => {
       const next = new Set(prev);
       if (next.has(field)) {
         next.delete(field);
-        // Also remove from allowEmpty if deselected
+        // Also remove from allowEmpty and deduplicateFields if deselected
         setAllowEmpty((r) => { const n = new Set(r); n.delete(field); return n; });
+        setDeduplicateFields((d) => { const n = new Set(d); n.delete(field); return n; });
+        setFieldFilters((f) => { const n = { ...f }; delete n[field]; return n; });
       } else {
         next.add(field);
       }
@@ -175,11 +184,25 @@ const JsonToCsvConverter = () => {
     });
   };
 
+  const toggleDeduplicateField = (field) => {
+    setDeduplicateFields((prev) => {
+      const next = new Set(prev);
+      if (next.has(field)) next.delete(field);
+      else next.add(field);
+      return next;
+    });
+  };
+
   const selectAll = () => {
     if (parsedData) setSelectedFields(new Set(parsedData.fields));
   };
 
-  const deselectAll = () => { setSelectedFields(new Set()); setAllowEmpty(new Set()); };
+  const deselectAll = () => {
+    setSelectedFields(new Set());
+    setAllowEmpty(new Set());
+    setDeduplicateFields(new Set());
+    setFieldFilters({});
+  };
 
   // ── File upload handler ──
   const handleFileUpload = (e) => {
@@ -204,6 +227,13 @@ const JsonToCsvConverter = () => {
       return `~${count} (filtered)`;
     }
     return count;
+  };
+
+  const getFilterableFields = () => {
+    if (!parsedData?.uniqueValues) return [];
+    return [...selectedFields].filter(
+      (field) => !field.startsWith('_') && parsedData.uniqueValues[field]?.length > 0
+    );
   };
 
   // ── Render ──
@@ -312,6 +342,116 @@ const JsonToCsvConverter = () => {
             </Paper>
           )}
 
+          {/* Dynamic Field Filters (Multi-select) */}
+          {getFilterableFields().length > 0 && (
+            <Paper elevation={0} sx={paperSx}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <FilterListIcon sx={{ color: '#64748b' }} />
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0f172a' }}>
+                    Filter Data by Selected Fields (Multi-select)
+                  </Typography>
+                </Box>
+                {Object.values(fieldFilters).some((v) => v.length > 0) && (
+                  <Button
+                    size="small"
+                    startIcon={<ClearIcon sx={{ fontSize: 16 }} />}
+                    onClick={() => { setFieldFilters({}); setFilterSearchText({}); }}
+                    sx={{ textTransform: 'none', color: '#dc2626', fontWeight: 600, borderRadius: '8px', '&:hover': { bgcolor: '#fef2f2' } }}
+                  >
+                    Reset All Filters
+                  </Button>
+                )}
+              </Box>
+              <Typography variant="caption" sx={{ color: '#64748b', display: 'block', mb: 2 }}>
+                Select one or more values to restrict the export. If none are selected, all matching records will be exported. Use the search box inside each dropdown to find values quickly.
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 2.5, flexWrap: 'wrap' }}>
+                {getFilterableFields().map((field) => {
+                  const searchText = (filterSearchText[field] || '').toLowerCase();
+                  const allValues = parsedData.uniqueValues[field] || [];
+                  const filteredValues = searchText
+                    ? allValues.filter((v) => v.toLowerCase().includes(searchText))
+                    : allValues;
+                  const selectedCount = (fieldFilters[field] || []).length;
+
+                  return (
+                    <Box key={field} sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5, flex: '1 1 280px', minWidth: 260 }}>
+                      <FormControl sx={{ flex: 1 }}>
+                        <InputLabel id={`label-${field}`}>{`Filter by ${field}`}</InputLabel>
+                        <Select
+                          labelId={`label-${field}`}
+                          multiple
+                          value={fieldFilters[field] || []}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setFieldFilters((prev) => ({
+                              ...prev,
+                              [field]: typeof val === 'string' ? val.split(',') : val,
+                            }));
+                          }}
+                          onClose={() => setFilterSearchText((prev) => ({ ...prev, [field]: '' }))}
+                          renderValue={(selected) => (
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                              {selected.map((v) => (
+                                <Chip key={v} label={v} size="small" sx={{ height: 20 }} />
+                              ))}
+                            </Box>
+                          )}
+                          label={`Filter by ${field}`}
+                          sx={{ borderRadius: '8px' }}
+                          MenuProps={{ autoFocus: false, PaperProps: { sx: { maxHeight: 350 } } }}
+                        >
+                          <ListSubheader sx={{ bgcolor: '#fff', pt: 1, pb: 1 }}>
+                            <TextField
+                              size="small"
+                              autoFocus
+                              placeholder={`Search ${field}...`}
+                              fullWidth
+                              value={filterSearchText[field] || ''}
+                              onChange={(e) => setFilterSearchText((prev) => ({ ...prev, [field]: e.target.value }))}
+                              onKeyDown={(e) => e.stopPropagation()}
+                              InputProps={{
+                                startAdornment: (
+                                  <InputAdornment position="start">
+                                    <SearchIcon sx={{ fontSize: 18, color: '#94a3b8' }} />
+                                  </InputAdornment>
+                                ),
+                              }}
+                              sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
+                            />
+                          </ListSubheader>
+                          {filteredValues.slice(0, 500).map((val) => (
+                            <MenuItem key={val} value={val}>
+                              <Checkbox checked={(fieldFilters[field] || []).indexOf(val) > -1} size="small" />
+                              <Typography variant="body2">{val}</Typography>
+                            </MenuItem>
+                          ))}
+                          {filteredValues.length === 0 && (
+                            <MenuItem disabled>
+                              <Typography variant="body2" sx={{ color: '#94a3b8', fontStyle: 'italic' }}>No matches found</Typography>
+                            </MenuItem>
+                          )}
+                        </Select>
+                      </FormControl>
+                      {selectedCount > 0 && (
+                        <Tooltip title={`Clear ${field} filter (${selectedCount} selected)`}>
+                          <IconButton
+                            size="small"
+                            onClick={() => setFieldFilters((prev) => ({ ...prev, [field]: [] }))}
+                            sx={{ mt: 1, bgcolor: '#fef2f2', color: '#dc2626', borderRadius: '8px', '&:hover': { bgcolor: '#fee2e2' } }}
+                          >
+                            <ClearIcon sx={{ fontSize: 18 }} />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </Box>
+                  );
+                })}
+              </Box>
+            </Paper>
+          )}
+
           {/* Field Selection */}
           <Paper elevation={0} sx={paperSx}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
@@ -343,22 +483,40 @@ const JsonToCsvConverter = () => {
                     {field}
                   </Typography>
                   {selectedFields.has(field) && (
-                    <Tooltip title={allowEmpty.has(field) ? 'Currently: includes empty values. Click to require value (skip empty)' : 'Currently: skips empty records. Click to allow empty values'}>
-                      <Chip
-                        size="small"
-                        label={allowEmpty.has(field) ? 'Allow empty' : '✓ Must have value'}
-                        onClick={() => toggleAllowEmpty(field)}
-                        sx={{
-                          ml: 0.5, height: 18, fontSize: '0.6rem', cursor: 'pointer',
-                          bgcolor: allowEmpty.has(field) ? '#fef3c7' : '#dcfce7',
-                          color: allowEmpty.has(field) ? '#d97706' : '#16a34a',
-                          border: '1px solid',
-                          borderColor: allowEmpty.has(field) ? '#fde68a' : '#bbf7d0',
-                          borderRadius: '16px',
-                          '&:hover': { bgcolor: allowEmpty.has(field) ? '#fde68a' : '#bbf7d0' },
-                        }}
-                      />
-                    </Tooltip>
+                    <>
+                      <Tooltip title={allowEmpty.has(field) ? 'Currently: includes empty values. Click to require value (skip empty)' : 'Currently: skips empty records. Click to allow empty values'}>
+                        <Chip
+                          size="small"
+                          label={allowEmpty.has(field) ? 'Allow empty' : '✓ Must have value'}
+                          onClick={() => toggleAllowEmpty(field)}
+                          sx={{
+                            ml: 0.5, height: 18, fontSize: '0.6rem', cursor: 'pointer',
+                            bgcolor: allowEmpty.has(field) ? '#fef3c7' : '#dcfce7',
+                            color: allowEmpty.has(field) ? '#d97706' : '#16a34a',
+                            border: '1px solid',
+                            borderColor: allowEmpty.has(field) ? '#fde68a' : '#bbf7d0',
+                            borderRadius: '16px',
+                            '&:hover': { bgcolor: allowEmpty.has(field) ? '#fde68a' : '#bbf7d0' },
+                          }}
+                        />
+                      </Tooltip>
+                      <Tooltip title={deduplicateFields.has(field) ? 'Currently: deduplicating by this field. Click to disable unique filter' : 'Click to deduplicate records by this field (keep only unique values)'}>
+                        <Chip
+                          size="small"
+                          label={deduplicateFields.has(field) ? '★ Unique' : 'Set Unique'}
+                          onClick={() => toggleDeduplicateField(field)}
+                          sx={{
+                            ml: 0.5, height: 18, fontSize: '0.6rem', cursor: 'pointer',
+                            bgcolor: deduplicateFields.has(field) ? '#e0f2fe' : '#f1f5f9',
+                            color: deduplicateFields.has(field) ? '#0369a1' : '#64748b',
+                            border: '1px solid',
+                            borderColor: deduplicateFields.has(field) ? '#bae6fd' : '#e2e8f0',
+                            borderRadius: '16px',
+                            '&:hover': { bgcolor: deduplicateFields.has(field) ? '#bae6fd' : '#e2e8f0' },
+                          }}
+                        />
+                      </Tooltip>
+                    </>
                   )}
                 </Box>
               ))}
@@ -524,7 +682,7 @@ const JsonToCsvConverter = () => {
             >
               {exporting
                 ? 'Generating export...'
-                : `Export ${outputFormat === 'excel' ? 'Excel' : (exportMode === 'single' ? 'CSV' : 'ZIP')} (${selectedFields.size} fields, ${selectedFields.size - allowEmpty.size} required)`}
+                : `Export ${outputFormat === 'excel' ? 'Excel' : (exportMode === 'single' ? 'CSV' : 'ZIP')} (${selectedFields.size} fields, ${selectedFields.size - allowEmpty.size} required${deduplicateFields.size > 0 ? `, ${deduplicateFields.size} unique` : ''})`}
             </Button>
             {exporting && (
               <Fade in>

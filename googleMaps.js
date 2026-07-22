@@ -354,6 +354,36 @@ const searchGoogleMaps = async (req, res) => {
               address = part;
             }
           });
+
+          // Clean up category if it is a concatenated string containing storeName or rating details
+          if (category) {
+            let cleanedCategory = category.trim();
+
+            // If category contains the storeName at the start, strip it
+            if (storeName) {
+              const storeNameNormalized = storeName.toLowerCase().trim();
+              if (cleanedCategory.toLowerCase().startsWith(storeNameNormalized)) {
+                cleanedCategory = cleanedCategory.slice(storeNameNormalized.length).trim();
+              }
+            }
+
+            // If the category contains a rating pattern (e.g., "4.9" or " 4.9"), strip everything up to and including the rating
+            const ratingRegex = /(?:^|.*\s)([1-5]\.[0-9])(?:\s*\(\d[\d,]*\))?\s*(.*)/i;
+            const match = cleanedCategory.match(ratingRegex);
+            if (match) {
+              cleanedCategory = match[2].trim();
+            }
+
+            // Strip any leading rating that wasn't matched (e.g. starts with digits/dot)
+            cleanedCategory = cleanedCategory.replace(/^[\d.]+\s*(?:\(\d[\d,]*\))?\s*/, "").trim();
+
+            // Strip any leading separators
+            if (cleanedCategory.startsWith("·")) {
+              cleanedCategory = cleanedCategory.slice(1).trim();
+            }
+
+            category = cleanedCategory;
+          }
         }
 
         // ── Website ──
